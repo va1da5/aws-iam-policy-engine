@@ -64,44 +64,87 @@ export class IAMPolicyEngine {
       .map((key) => {
         switch (key) {
           case "StringEquals": {
-            return this.checkStringEqualsCondition(condition[key], context);
+            return this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => value === conditionValue
+            );
           }
+
           case "StringNotEquals": {
-            return !this.checkStringEqualsCondition(condition[key], context);
+            return !this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => value === conditionValue
+            );
           }
+
           case "StringEqualsIgnoreCase": {
-            return this.checkStringEqualsIgnoreCaseCondition(
+            return this.checkStringCondition(
               condition[key],
-              context
+              context,
+              (conditionValue, value) =>
+                value.toLocaleLowerCase() === conditionValue.toLocaleLowerCase()
             );
           }
+
           case "StringNotEqualsIgnoreCase": {
-            return !this.checkStringEqualsIgnoreCaseCondition(
+            return !this.checkStringCondition(
               condition[key],
-              context
+              context,
+              (conditionValue, value) =>
+                value.toLocaleLowerCase() === conditionValue.toLocaleLowerCase()
             );
           }
+
           case "StringLike": {
-            return this.checkStringLikeCondition(condition[key], context);
+            return this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) =>
+                this.wildcardMatch(conditionValue, value)
+            );
           }
+
           case "StringNotLike": {
-            return !this.checkStringLikeCondition(condition[key], context);
+            return !this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) =>
+                this.wildcardMatch(conditionValue, value)
+            );
           }
 
           case "ArnLike": {
-            return this.checkArnLikeCondition(condition[key], context);
+            return this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => this.arnMatch(conditionValue, value)
+            );
           }
 
           case "ArnEquals": {
-            return this.checkArnLikeCondition(condition[key], context);
+            return this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => this.arnMatch(conditionValue, value)
+            );
           }
 
           case "ArnNotLike": {
-            return !this.checkArnLikeCondition(condition[key], context);
+            return !this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => this.arnMatch(conditionValue, value)
+            );
           }
 
           case "ArnNotEquals": {
-            return !this.checkArnLikeCondition(condition[key], context);
+            return !this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => this.arnMatch(conditionValue, value)
+            );
           }
 
           case "NumericEquals": {
@@ -222,11 +265,10 @@ export class IAMPolicyEngine {
       .every((success) => success);
   }
 
-  // TODO: Refactor to extract logic and migrate to switch clause
-  // Exact matching, case sensitive
-  checkStringEqualsCondition(
+  checkStringCondition(
     condition: { [key: string]: string | string[] },
-    context: AWSContext
+    context: AWSContext,
+    comparator: (condition: string, contextValue: string) => boolean
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -234,106 +276,12 @@ export class IAMPolicyEngine {
         const value = condition[contextKey];
 
         if (isString(value)) {
-          if (value === context[contextKey]) {
+          if (comparator(value, context[contextKey] as string)) {
             isAllowed = true;
           }
         } else {
           for (const item of value) {
-            if (item === context[contextKey]) {
-              isAllowed = true;
-              break;
-            }
-          }
-        }
-
-        return isAllowed;
-      })
-      .every((result) => result);
-  }
-
-  // Exact matching, ignoring case
-  checkStringEqualsIgnoreCaseCondition(
-    condition: { [key: string]: string | string[] },
-    context: AWSContext
-  ) {
-    return Object.keys(condition)
-      .map((contextKey) => {
-        let isAllowed = false;
-        const value = condition[contextKey];
-
-        if (isString(value)) {
-          if (
-            value.toLocaleLowerCase() ===
-            (context[contextKey] as string).toLocaleLowerCase()
-          ) {
-            isAllowed = true;
-          }
-        } else {
-          for (const item of value) {
-            if (
-              item.toLocaleLowerCase() ===
-              (context[contextKey] as string).toLocaleLowerCase()
-            ) {
-              isAllowed = true;
-              break;
-            }
-          }
-        }
-
-        return isAllowed;
-      })
-      .every((result) => result);
-  }
-
-  // Case-sensitive matching. The values can include multi-character match wildcards (*)
-  // and single-character match wildcards (?) anywhere in the string. You must specify
-  // wildcards to achieve partial string matches.
-  checkStringLikeCondition(
-    condition: { [key: string]: string | string[] },
-    context: AWSContext
-  ) {
-    return Object.keys(condition)
-      .map((contextKey) => {
-        let isAllowed = false;
-        const value = condition[contextKey];
-
-        if (isString(value)) {
-          if (this.wildcardMatch(value, context[contextKey] as string)) {
-            isAllowed = true;
-          }
-        } else {
-          for (const item of value) {
-            if (this.wildcardMatch(item, context[contextKey] as string)) {
-              isAllowed = true;
-              break;
-            }
-          }
-        }
-
-        return isAllowed;
-      })
-      .every((result) => result);
-  }
-
-  // Case-sensitive matching of the ARN. Each of the six colon-delimited components
-  // of the ARN is checked separately and each can include multi-character match wildcards (*)
-  // or single-character match wildcards (?). The ArnEquals and ArnLike condition operators behave identically.
-  checkArnLikeCondition(
-    condition: { [key: string]: string | string[] },
-    context: AWSContext
-  ) {
-    return Object.keys(condition)
-      .map((contextKey) => {
-        let isAllowed = false;
-        const value = condition[contextKey];
-
-        if (isString(value)) {
-          if (this.arnMatch(value, context[contextKey] as string)) {
-            isAllowed = true;
-          }
-        } else {
-          for (const item of value) {
-            if (this.arnMatch(item, context[contextKey] as string)) {
+            if (comparator(item, context[contextKey] as string)) {
               isAllowed = true;
               break;
             }
