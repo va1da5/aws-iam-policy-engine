@@ -1,5 +1,6 @@
 import { isString, parseBool } from "@/utils/genetic";
 import { Action, AWSContext, Condition, Policy, Resource } from "./types";
+import ipRangeCheck from "ip-range-check";
 
 export class IAMPolicyEngine {
   policy: Policy;
@@ -107,7 +108,7 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (condition, value) => value === condition
+              (conditionValue, value) => value === conditionValue
             );
           }
 
@@ -115,7 +116,7 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (condition, value) => value !== condition
+              (conditionValue, value) => value !== conditionValue
             );
           }
 
@@ -123,7 +124,7 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (condition, value) => value < condition
+              (conditionValue, value) => value < conditionValue
             );
           }
 
@@ -131,7 +132,7 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (condition, value) => value <= condition
+              (conditionValue, value) => value <= conditionValue
             );
           }
 
@@ -139,7 +140,7 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (condition, value) => value > condition
+              (conditionValue, value) => value > conditionValue
             );
           }
 
@@ -147,12 +148,70 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (condition, value) => value >= condition
+              (conditionValue, value) => value >= conditionValue
             );
           }
 
           case "Bool": {
             return this.checkBoolCondition(condition[key], context);
+          }
+
+          case "DateEquals": {
+            return this.checkDateCondition(
+              condition[key],
+              context,
+              (conditionValue, value) =>
+                value.getTime() === conditionValue.getTime()
+            );
+          }
+
+          case "DateNotEquals": {
+            return this.checkDateCondition(
+              condition[key],
+              context,
+              (conditionValue, value) =>
+                value.getTime() !== conditionValue.getTime()
+            );
+          }
+
+          case "DateLessThan": {
+            return this.checkDateCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => value < conditionValue
+            );
+          }
+
+          case "DateLessThanEquals": {
+            return this.checkDateCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => value <= conditionValue
+            );
+          }
+
+          case "DateGreaterThan": {
+            return this.checkDateCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => value > conditionValue
+            );
+          }
+
+          case "DateGreaterThanEquals": {
+            return this.checkDateCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => value >= conditionValue
+            );
+          }
+
+          case "IpAddress": {
+            return this.checkIpAddressCondition(condition[key], context);
+          }
+
+          case "NotIpAddress": {
+            return !this.checkIpAddressCondition(condition[key], context);
           }
 
           default: {
@@ -269,22 +328,12 @@ export class IAMPolicyEngine {
         const value = condition[contextKey];
 
         if (isString(value)) {
-          if (
-            this.wildcardMatch(
-              this.arnWildcards(value),
-              context[contextKey] as string
-            )
-          ) {
+          if (this.arnMatch(value, context[contextKey] as string)) {
             isAllowed = true;
           }
         } else {
           for (const item of value) {
-            if (
-              this.wildcardMatch(
-                this.arnWildcards(item),
-                context[contextKey] as string
-              )
-            ) {
+            if (this.arnMatch(item, context[contextKey] as string)) {
               isAllowed = true;
               break;
             }
@@ -299,7 +348,7 @@ export class IAMPolicyEngine {
   checkNumericCondition(
     condition: { [key: string]: string | string[] },
     context: AWSContext,
-    comparator: (contextNumber: number, condition: number) => boolean
+    comparator: (condition: number, contextNumber: number) => boolean
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -325,11 +374,72 @@ export class IAMPolicyEngine {
       .every((result) => result);
   }
 
+  checkDateCondition(
+    condition: { [key: string]: string | string[] },
+    context: AWSContext,
+    comparator: (condition: Date, contextValue: Date) => boolean
+  ) {
+    return Object.keys(condition)
+      .map((contextKey) => {
+        return comparator(
+          new Date(condition[contextKey] as string),
+          new Date(context[contextKey] as string)
+        );
+      })
+      .every((result) => result);
+  }
+
+  checkIpAddressCondition(
+    condition: { [key: string]: string | string[] },
+    context: AWSContext
+  ) {
+    return Object.keys(condition)
+      .map((contextKey) => {
+        let isAllowed = false;
+        const value = condition[contextKey];
+
+        if (isString(value)) {
+          if (ipRangeCheck(context[contextKey] as string, value)) {
+            isAllowed = true;
+          }
+        } else {
+          for (const item of value) {
+            if (ipRangeCheck(context[contextKey] as string, item)) {
+              isAllowed = true;
+              break;
+            }
+          }
+        }
+
+        return isAllowed;
+      })
+      .every((result) => result);
+  }
+
   arnWildcards(arn: string) {
     return arn
       .split(":")
       .map((part) => (part === "" ? "*" : part))
       .join(":");
+  }
+
+  arnMatch(pattern: string, str: string) {
+    const patternParts = pattern.split(":");
+    const strParts = str.split(":");
+
+    if (patternParts.length !== strParts.length) {
+      return false;
+    }
+
+    return patternParts
+      .map((part, index) => {
+        // If the pattern part is empty, it matches any value
+        if (!part.length && index !== patternParts.length - 1) return true;
+        if (part === "*" && strParts[index].length > 0) return true;
+
+        return this.wildcardMatch(part, strParts[index]);
+      })
+      .every((result) => result);
   }
 
   wildcardMatch(pattern: string, str: string) {

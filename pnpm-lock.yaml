@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      ip-range-check:
+        specifier: ^0.2.0
+        version: 0.2.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1092,6 +1095,13 @@ packages:
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
+
+  ip-range-check@0.2.0:
+    resolution: {integrity: sha512-oaM3l/3gHbLlt/tCWLvt0mj1qUaI+STuRFnUvARGCujK9vvU61+2JsDpmkMzR4VsJhuFXWWgeKKVnwwoFfzCqw==}
+
+  ipaddr.js@1.9.1:
+    resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
+    engines: {node: '>= 0.10'}
 
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
@@ -2704,6 +2714,12 @@ snapshots:
       wrappy: 1.0.2
 
   inherits@2.0.4: {}
+
+  ip-range-check@0.2.0:
+    dependencies:
+      ipaddr.js: 1.9.1
+
+  ipaddr.js@1.9.1: {}
 
   is-extglob@2.1.1: {}
 

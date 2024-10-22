@@ -411,6 +411,64 @@ describe("Test Conditions", () => {
     ).toBeTruthy();
   });
 
+  test("Condition ArnLike matches", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceArn":
+            "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
+        },
+        {
+          ArnLike: {
+            "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceArn":
+            "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
+        },
+        {
+          ArnLike: {
+            "aws:SourceArn": "arn:aws:cloudtrail::111122223333:trail/*",
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceArn":
+            "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
+        },
+        {
+          ArnLike: {
+            "aws:SourceArn": "arn:aws:cloudtrail:::trail/*",
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceArn":
+            "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
+        },
+        {
+          ArnLike: {
+            "aws:SourceArn": "arn:aws:cloudtrail:::*",
+          },
+        }
+      )
+    ).toBeTruthy();
+  });
+
   test("Condition ArnLike does not match", () => {
     expect(
       engine.conditionMatches(
@@ -421,6 +479,20 @@ describe("Test Conditions", () => {
         {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
+          },
+        }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceArn":
+            "arn:aws:cloudtrail:us-east-2:444455556666:user/111122223333:trail/finance",
+        },
+        {
+          ArnLike: {
+            "aws:SourceArn": "arn:aws:cloudtrail:::",
           },
         }
       )
@@ -448,7 +520,7 @@ describe("Test Conditions", () => {
       engine.conditionMatches(
         {
           "aws:SourceArn":
-            "arn:aws:cloudtrail:us-east-2:us-west-2:111122223333:trail/finance",
+            "arn:aws:cloudtrail:us-east-2:111122223333:trail/finance",
         },
         {
           ArnNotLike: {
@@ -594,7 +666,7 @@ describe("Test Conditions", () => {
     ).toBeTruthy();
   });
 
-  test("Condition Bool matches", () => {
+  test("Condition Bool does not match", () => {
     expect(
       engine.conditionMatches(
         {
@@ -603,6 +675,213 @@ describe("Test Conditions", () => {
         {
           Bool: {
             "aws:SecureTransport": "true",
+          },
+        }
+      )
+    ).toBeFalsy();
+  });
+
+  test("Condition Date matches", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
+        },
+        { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2021-01-01T00:00:01Z",
+        },
+        { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2019-01-01T00:00:01Z",
+        },
+        { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
+        },
+        { DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
+        },
+        { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
+        },
+        {
+          DateGreaterThanEquals: {
+            "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
+          },
+        }
+      )
+    ).toBeTruthy();
+  });
+
+  test("Condition Date does not match", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
+        },
+        { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
+        },
+        { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-02T00:00:01Z",
+        },
+        { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
+        },
+        { DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2020-01-01T00:00:00Z",
+        },
+        { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:TokenIssueTime": "2019-01-01T00:00:02Z",
+        },
+        {
+          DateGreaterThanEquals: {
+            "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
+          },
+        }
+      )
+    ).toBeFalsy();
+  });
+
+  test("Condition IpAddress matches", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "203.0.113.2",
+        },
+        { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "203.0.113.13",
+        },
+        {
+          IpAddress: {
+            "aws:SourceIp": ["203.0.113.12", "203.0.113.13", "203.0.113.14"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "203.0.113.13",
+        },
+        {
+          IpAddress: {
+            "aws:SourceIp": "203.0.113.13",
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "2001:DB8:1234:5678::100",
+        },
+        {
+          IpAddress: {
+            "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
+          },
+        }
+      )
+    ).toBeTruthy();
+  });
+
+  test("Condition IpAddress does not match", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "172.0.113.2",
+        },
+        { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "203.0.113.50",
+        },
+        {
+          IpAddress: {
+            "aws:SourceIp": ["203.0.113.12", "203.0.113.13", "203.0.113.14"],
+          },
+        }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          "aws:SourceIp": "2002:DB8:1234:5678::100",
+        },
+        {
+          IpAddress: {
+            "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
           },
         }
       )
