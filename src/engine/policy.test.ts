@@ -145,7 +145,7 @@ describe("Test policy functionality", () => {
           Action: ["s3:GetObject", "s3:PutObject"],
           Resource: "arn:aws:s3:::example-bucket/*",
           Condition: {
-            IpAddress: {
+            IpAddressIfExists: {
               "aws:SourceIp": "203.0.113.0/24",
             },
           },
@@ -174,6 +174,21 @@ describe("Test policy functionality", () => {
         action: "s3:PutObject",
         resource: "arn:aws:s3:::example-bucket/test.jpg",
         "aws:SourceIp": "203.0.113.50",
+      })
+    ).toBeFalsy();
+
+    expect(
+      policy.evaluate({
+        action: "s3:PutObject",
+        resource: "arn:aws:s3:::example-bucket/test.jpg",
+      })
+    ).toBeFalsy();
+
+    expect(
+      policy.evaluate({
+        action: "s3:DeleteBucket",
+        resource: "arn:aws:s3:::example-bucket",
+        "aws:SourceIp": "18.20.50.10",
       })
     ).toBeFalsy();
   });
