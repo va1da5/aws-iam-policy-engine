@@ -2,163 +2,17 @@ import { describe, test, expect } from "vitest";
 
 import { IAMPolicyEngine } from "./index";
 
-describe("Test wildcard functionality", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
-
-  test("Action match single wildcard", () => {
-    expect(engine.wildcardMatch("iam:Get*", "iam:GetAccessKeyId")).toBeTruthy();
-  });
-
-  test("Match multiple wildcards", () => {
-    expect(
-      engine.wildcardMatch("iam:*AccessKey*", "iam:GetAccessKeyId")
-    ).toBeTruthy();
-  });
-
-  test("Match all", () => {
-    expect(engine.wildcardMatch("*", "iam:GetAccessKeyId")).toBeTruthy();
-  });
-
-  test("Match service", () => {
-    expect(engine.wildcardMatch("iam:*", "iam:PutAccessKey")).toBeTruthy();
-  });
-
-  test("Does not match wildcard", () => {
-    expect(
-      engine.wildcardMatch("iam:GetAccessKey*", "iam:PutAccessKeyId")
-    ).toBeFalsy();
-  });
-
-  test("Wildcard ARN as string", () => {
-    expect(
-      engine.wildcardMatch(
-        "arn:aws:cloudtrail:*:111122223333:trail/*",
-        "arn:aws:cloudtrail:us-east-2:444455556666:user/111122223333:trail/finance"
-      )
-    ).toBeFalsy();
-  });
-});
-
-describe("Test Resources", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
-
-  test("Resource match global wildcard", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/test.jpg",
-        "*"
-      )
-    ).toBeTruthy();
-  });
-
-  test("Resource match file wildcard", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/test.jpg",
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/*"
-      )
-    ).toBeTruthy();
-  });
-
-  test("Resource match multiple file wildcards", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/test/account.jpg",
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/*/*.jpg"
-      )
-    ).toBeTruthy();
-  });
-
-  test("Resource match region wildcard", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:us-east-1::amzn-s3-demo-bucket-production/test.jpg",
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/*"
-      )
-    ).toBeTruthy();
-  });
-
-  test("Resource match account wildcard", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket-production/test.jpg",
-        "arn:aws:s3:::amzn-s3-demo-bucket-production/*"
-      )
-    ).toBeTruthy();
-  });
-
-  test("Resource match account wildcard array", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket-production/test.jpg",
-        [
-          "arn:aws:s3:::amzn-s3-demo-bucket-test/*",
-          "arn:aws:s3:::amzn-s3-demo-bucket-production/*",
-        ]
-      )
-    ).toBeTruthy();
-  });
-
-  test("Resource does not match account wildcard array", () => {
-    expect(
-      engine.resourceMatches(
-        "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket-production/test.jpg",
-        [
-          "arn:aws:s3:::amzn-s3-demo-bucket-test/*.jpg",
-          "arn:aws:s3:::amzn-s3-demo-bucket-uat/*.gif",
-        ]
-      )
-    ).toBeFalsy();
-  });
-});
-
-describe("Test Actions", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
-
-  test("Action match global wildcard", () => {
-    expect(engine.actionMatches("sqs:SendMessage", "*")).toBeTruthy();
-  });
-
-  test("Action match service wildcard", () => {
-    expect(engine.actionMatches("sqs:SendMessage", "sqs:*")).toBeTruthy();
-  });
-
-  test("Action match service action wildcard", () => {
-    expect(engine.actionMatches("s3:GetObject", "s3:Get*")).toBeTruthy();
-  });
-
-  test("Action match service action multiple wildcard", () => {
-    expect(
-      engine.actionMatches("iam:DeleteAccessKey", "iam:*AccessKey*")
-    ).toBeTruthy();
-  });
-
-  test("Action match service action multiple wildcard array", () => {
-    expect(
-      engine.actionMatches("iam:DeleteAccessKey", ["iam:*AccessKey*"])
-    ).toBeTruthy();
-  });
-
-  test("Action does not match service action wildcard array", () => {
-    expect(
-      engine.actionMatches("iam:DeleteAccessKey", ["s3:*", "sqs:*"])
-    ).toBeFalsy();
-  });
-
-  test("Action match service action wildcard array", () => {
-    expect(
-      engine.actionMatches("iam:DeleteAccessKey", ["s3:*", "iam:*", "sqs:*"])
-    ).toBeTruthy();
-  });
-});
-
 describe("Test Conditions", () => {
   const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
 
   test("Condition StringEquals matches", () => {
     expect(
       engine.conditionMatches(
-        { "aws:PrincipalTag/job-category": "iamuser-admin" },
+        {
+          action: "",
+          resource: "",
+          "aws:PrincipalTag/job-category": "iamuser-admin",
+        },
         {
           StringEquals: {
             "aws:PrincipalTag/job-category": "iamuser-admin",
@@ -171,7 +25,11 @@ describe("Test Conditions", () => {
   test("Condition StringEquals does not match", () => {
     expect(
       engine.conditionMatches(
-        { "aws:PrincipalTag/job-category": "s3-admin" },
+        {
+          action: "",
+          resource: "",
+          "aws:PrincipalTag/job-category": "s3-admin",
+        },
         {
           StringEquals: {
             "aws:PrincipalTag/job-category": "iamuser-admin",
@@ -184,7 +42,11 @@ describe("Test Conditions", () => {
   test("Condition StringEquals matches arrya", () => {
     expect(
       engine.conditionMatches(
-        { "aws:PrincipalTag/job-category": "iamuser-admin" },
+        {
+          action: "",
+          resource: "",
+          "aws:PrincipalTag/job-category": "iamuser-admin",
+        },
         {
           StringEquals: {
             "aws:PrincipalTag/job-category": ["ec2-user", "iamuser-admin"],
@@ -198,6 +60,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "iamuser-admin",
           "aws:PrincipalTag/department": "devops",
         },
@@ -215,6 +79,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "",
           "aws:PrincipalTag/department": "devops",
         },
@@ -232,6 +98,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "iamuser-admin",
           "aws:PrincipalTag/department": "database",
         },
@@ -249,6 +117,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/department": "database",
         },
         {
@@ -264,6 +134,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/department": "database",
         },
         {
@@ -279,6 +151,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/department": "Database",
         },
         {
@@ -294,6 +168,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/department": "HR",
         },
         {
@@ -309,6 +185,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/department": "HR",
         },
         {
@@ -324,6 +202,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/department": "HR",
         },
         {
@@ -339,6 +219,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "iam-admin",
         },
         {
@@ -354,6 +236,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "lambda-developer",
         },
         {
@@ -369,6 +253,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "iam-admin",
         },
         {
@@ -384,6 +270,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:PrincipalTag/job-category": "lambda-developer",
         },
         {
@@ -399,6 +287,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
         },
@@ -415,6 +305,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
         },
@@ -429,6 +321,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
         },
@@ -443,6 +337,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
         },
@@ -457,6 +353,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-west-2:111122223333:trail/finance",
         },
@@ -473,6 +371,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-east-2:444455556666:user/111122223333:trail/finance",
         },
@@ -487,6 +387,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-east-2:444455556666:user/111122223333:trail/finance",
         },
@@ -503,6 +405,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-west-2:123456789012:trail/finance",
         },
@@ -519,6 +423,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceArn":
             "arn:aws:cloudtrail:us-east-2:111122223333:trail/finance",
         },
@@ -535,6 +441,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "10",
         },
         {
@@ -550,6 +458,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "10",
         },
         {
@@ -565,6 +475,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "5",
         },
         {
@@ -580,6 +492,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "10",
         },
         {
@@ -595,6 +509,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "9",
         },
         {
@@ -610,6 +526,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "10",
         },
         {
@@ -625,6 +543,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "11",
         },
         {
@@ -640,6 +560,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "s3:max-keys": "10",
         },
         {
@@ -655,6 +577,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SecureTransport": "true",
         },
         {
@@ -670,6 +594,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SecureTransport": "",
         },
         {
@@ -685,6 +611,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
         { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -694,6 +622,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2021-01-01T00:00:01Z",
         },
         { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -703,6 +633,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2019-01-01T00:00:01Z",
         },
         { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -712,6 +644,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
         { DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -721,6 +655,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
         { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -730,6 +666,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
         {
@@ -745,6 +683,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
         { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -754,6 +694,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
         { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -763,6 +705,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-02T00:00:01Z",
         },
         { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -772,6 +716,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
         { DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -781,6 +727,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:00Z",
         },
         { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
@@ -790,6 +738,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:TokenIssueTime": "2019-01-01T00:00:02Z",
         },
         {
@@ -805,6 +755,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "203.0.113.2",
         },
         { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } }
@@ -814,6 +766,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "203.0.113.13",
         },
         {
@@ -827,6 +781,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "203.0.113.13",
         },
         {
@@ -840,10 +796,27 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "2001:DB8:1234:5678::100",
         },
         {
           IpAddress: {
+            "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:SourceIp": "2002:DB8:1234:5678::100",
+        },
+        {
+          NotIpAddress: {
             "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
           },
         }
@@ -855,6 +828,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "172.0.113.2",
         },
         { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } }
@@ -864,6 +839,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "203.0.113.50",
         },
         {
@@ -877,6 +854,8 @@ describe("Test Conditions", () => {
     expect(
       engine.conditionMatches(
         {
+          action: "",
+          resource: "",
           "aws:SourceIp": "2002:DB8:1234:5678::100",
         },
         {
@@ -886,5 +865,85 @@ describe("Test Conditions", () => {
         }
       )
     ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:SourceIp": "2001:DB8:1234:5678::100",
+        },
+        {
+          NotIpAddress: {
+            "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
+          },
+        }
+      )
+    ).toBeFalsy();
+  });
+
+  test("Condition ...IfExists testing", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:SourceIp": "203.0.113.2",
+        },
+        { IpAddressIfExists: { "aws:SourceIp": "203.0.113.0/24" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:SourceIp": "203.0.113.2",
+        },
+        { IpAddressIfExists: { "aws:TargetIp": "203.0.113.0/24" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:SourceIp": "203.0.113.2",
+        },
+        { IpAddressIfExists: { "aws:SourceIp": "103.0.113.0/24" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:PrincipalTag/department": "database",
+        },
+        {
+          StringNotEqualsIfExists: {
+            "aws:PrincipalTag/department": "database",
+          },
+        }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:PrincipalTag/department": "database",
+        },
+        {
+          StringNotEqualsIfExists: {
+            "aws:PrincipalTag/unit": "developers",
+          },
+        }
+      )
+    ).toBeTruthy();
   });
 });

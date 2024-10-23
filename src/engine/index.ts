@@ -1,5 +1,5 @@
 import { isString, parseBool } from "@/utils/genetic";
-import { Action, AWSContext, Condition, Policy, Resource } from "./types";
+import { Action, Condition, Policy, RequestContext, Resource } from "./types";
 import ipRangeCheck from "ip-range-check";
 
 export class IAMPolicyEngine {
@@ -10,29 +10,62 @@ export class IAMPolicyEngine {
   }
 
   // Main method to evaluate access
-  evaluate({ action, resource }: { action: string; resource: string }) {
+  evaluate(requestContext: RequestContext) {
     const statements = this.policy.Statement;
 
     let isAllowed = false;
 
     for (const statement of statements) {
-      const { Effect, Action, Resource } = statement; //Condition
+      const { Effect, ...elements } = statement;
 
-      // Check if the action matches
-      const actionMatches = this.actionMatches(action, Action);
-      // Check if the resource matches
-      const resourceMatches = this.resourceMatches(resource, Resource);
-      // Check if the conditions are satisfied
-      //   const conditionsSatisfied = this.checkConditions(Condition, sourceIp);
+      const outcome = Object.keys(elements).map((element) => {
+        switch (element) {
+          case "Sid": {
+            return true;
+          }
 
-      if (actionMatches && resourceMatches) {
-        // && conditionsSatisfied
-        if (Effect === "Allow") {
-          isAllowed = true;
-        } else if (Effect === "Deny") {
-          return false; // Deny takes precedence
+          case "Action": {
+            return this.actionMatches(
+              requestContext["action"],
+              statement[element]
+            );
+          }
+          case "NotAction": {
+            return this.actionMatches(
+              requestContext["action"],
+              statement[element] as Action
+            );
+          }
+          case "Resource": {
+            return this.resourceMatches(
+              requestContext["resource"],
+              statement[element]
+            );
+          }
+          case "NotResource": {
+            return !this.resourceMatches(
+              requestContext["resource"],
+              statement[element] as Resource
+            );
+          }
+
+          case "Condition": {
+            return this.conditionMatches(
+              requestContext,
+              statement[element] as Condition
+            );
+          }
+
+          default: {
+            throw new Error(`Unsupported statement element: ${element}`);
+          }
         }
-      }
+      });
+
+      if (outcome.every((match) => match) && Effect == "Deny") return false;
+
+      if (outcome.every((match) => match) && Effect == "Allow")
+        isAllowed = true;
     }
 
     return isAllowed;
@@ -57,25 +90,33 @@ export class IAMPolicyEngine {
     });
   }
 
-  conditionMatches(context: AWSContext, condition: Condition) {
+  conditionMatches(context: RequestContext, condition: Condition) {
     if (!condition) return true;
 
     return Object.keys(condition)
       .map((key) => {
-        switch (key) {
+        // capture if key ends with ..IfExists, remove it from key and pass flag indicating it to each handler
+        let operator = key;
+        const isIfExists = key.endsWith("IfExists");
+        if (isIfExists) operator = key.replace("IfExists", "");
+
+        switch (operator) {
           case "StringEquals": {
             return this.checkStringCondition(
               condition[key],
               context,
-              (conditionValue, value) => value === conditionValue
+              (conditionValue, value) => value === conditionValue,
+              isIfExists
             );
           }
 
           case "StringNotEquals": {
-            return !this.checkStringCondition(
+            return this.checkStringCondition(
               condition[key],
               context,
-              (conditionValue, value) => value === conditionValue
+              (conditionValue, value) => value !== conditionValue,
+              isIfExists,
+              true
             );
           }
 
@@ -84,16 +125,21 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) =>
-                value.toLocaleLowerCase() === conditionValue.toLocaleLowerCase()
+                value.toLocaleLowerCase() ===
+                conditionValue.toLocaleLowerCase(),
+              isIfExists
             );
           }
 
           case "StringNotEqualsIgnoreCase": {
-            return !this.checkStringCondition(
+            return this.checkStringCondition(
               condition[key],
               context,
               (conditionValue, value) =>
-                value.toLocaleLowerCase() === conditionValue.toLocaleLowerCase()
+                value.toLocaleLowerCase() !==
+                conditionValue.toLocaleLowerCase(),
+              isIfExists,
+              true
             );
           }
 
@@ -102,16 +148,19 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) =>
-                this.wildcardMatch(conditionValue, value)
+                this.wildcardMatch(conditionValue, value),
+              isIfExists
             );
           }
 
           case "StringNotLike": {
-            return !this.checkStringCondition(
+            return this.checkStringCondition(
               condition[key],
               context,
               (conditionValue, value) =>
-                this.wildcardMatch(conditionValue, value)
+                !this.wildcardMatch(conditionValue, value),
+              isIfExists,
+              true
             );
           }
 
@@ -119,7 +168,8 @@ export class IAMPolicyEngine {
             return this.checkStringCondition(
               condition[key],
               context,
-              (conditionValue, value) => this.arnMatch(conditionValue, value)
+              (conditionValue, value) => this.arnMatch(conditionValue, value),
+              isIfExists
             );
           }
 
@@ -127,23 +177,28 @@ export class IAMPolicyEngine {
             return this.checkStringCondition(
               condition[key],
               context,
-              (conditionValue, value) => this.arnMatch(conditionValue, value)
+              (conditionValue, value) => this.arnMatch(conditionValue, value),
+              isIfExists
             );
           }
 
           case "ArnNotLike": {
-            return !this.checkStringCondition(
+            return this.checkStringCondition(
               condition[key],
               context,
-              (conditionValue, value) => this.arnMatch(conditionValue, value)
+              (conditionValue, value) => !this.arnMatch(conditionValue, value),
+              isIfExists,
+              true
             );
           }
 
           case "ArnNotEquals": {
-            return !this.checkStringCondition(
+            return this.checkStringCondition(
               condition[key],
               context,
-              (conditionValue, value) => this.arnMatch(conditionValue, value)
+              (conditionValue, value) => !this.arnMatch(conditionValue, value),
+              isIfExists,
+              true
             );
           }
 
@@ -151,7 +206,8 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (conditionValue, value) => value === conditionValue
+              (conditionValue, value) => value === conditionValue,
+              isIfExists
             );
           }
 
@@ -159,7 +215,8 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (conditionValue, value) => value !== conditionValue
+              (conditionValue, value) => value !== conditionValue,
+              isIfExists
             );
           }
 
@@ -167,7 +224,8 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (conditionValue, value) => value < conditionValue
+              (conditionValue, value) => value < conditionValue,
+              isIfExists
             );
           }
 
@@ -175,7 +233,8 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (conditionValue, value) => value <= conditionValue
+              (conditionValue, value) => value <= conditionValue,
+              isIfExists
             );
           }
 
@@ -183,7 +242,8 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (conditionValue, value) => value > conditionValue
+              (conditionValue, value) => value > conditionValue,
+              isIfExists
             );
           }
 
@@ -191,12 +251,13 @@ export class IAMPolicyEngine {
             return this.checkNumericCondition(
               condition[key],
               context,
-              (conditionValue, value) => value >= conditionValue
+              (conditionValue, value) => value >= conditionValue,
+              isIfExists
             );
           }
 
           case "Bool": {
-            return this.checkBoolCondition(condition[key], context);
+            return this.checkBoolCondition(condition[key], context, isIfExists);
           }
 
           case "DateEquals": {
@@ -204,7 +265,8 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) =>
-                value.getTime() === conditionValue.getTime()
+                value.getTime() === conditionValue.getTime(),
+              isIfExists
             );
           }
 
@@ -213,7 +275,8 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) =>
-                value.getTime() !== conditionValue.getTime()
+                value.getTime() !== conditionValue.getTime(),
+              isIfExists
             );
           }
 
@@ -221,7 +284,8 @@ export class IAMPolicyEngine {
             return this.checkDateCondition(
               condition[key],
               context,
-              (conditionValue, value) => value < conditionValue
+              (conditionValue, value) => value < conditionValue,
+              isIfExists
             );
           }
 
@@ -229,7 +293,8 @@ export class IAMPolicyEngine {
             return this.checkDateCondition(
               condition[key],
               context,
-              (conditionValue, value) => value <= conditionValue
+              (conditionValue, value) => value <= conditionValue,
+              isIfExists
             );
           }
 
@@ -237,7 +302,8 @@ export class IAMPolicyEngine {
             return this.checkDateCondition(
               condition[key],
               context,
-              (conditionValue, value) => value > conditionValue
+              (conditionValue, value) => value > conditionValue,
+              isIfExists
             );
           }
 
@@ -245,16 +311,28 @@ export class IAMPolicyEngine {
             return this.checkDateCondition(
               condition[key],
               context,
-              (conditionValue, value) => value >= conditionValue
+              (conditionValue, value) => value >= conditionValue,
+              isIfExists
             );
           }
 
           case "IpAddress": {
-            return this.checkIpAddressCondition(condition[key], context);
+            return this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => ipRangeCheck(value, conditionValue),
+              isIfExists
+            );
           }
 
           case "NotIpAddress": {
-            return !this.checkIpAddressCondition(condition[key], context);
+            return this.checkStringCondition(
+              condition[key],
+              context,
+              (conditionValue, value) => !ipRangeCheck(value, conditionValue),
+              isIfExists,
+              true
+            );
           }
 
           default: {
@@ -267,39 +345,42 @@ export class IAMPolicyEngine {
 
   checkStringCondition(
     condition: { [key: string]: string | string[] },
-    context: AWSContext,
-    comparator: (condition: string, contextValue: string) => boolean
+    context: RequestContext,
+    comparator: (condition: string, contextValue: string) => boolean,
+    isIfExists: boolean,
+    isNegation: boolean = false
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
-        let isAllowed = false;
         const value = condition[contextKey];
 
-        if (isString(value)) {
-          if (comparator(value, context[contextKey] as string)) {
-            isAllowed = true;
-          }
-        } else {
-          for (const item of value) {
-            if (comparator(item, context[contextKey] as string)) {
-              isAllowed = true;
-              break;
-            }
-          }
-        }
+        if (isIfExists && !context[contextKey]) return true;
 
-        return isAllowed;
+        if (isString(value))
+          return comparator(value, context[contextKey] as string);
+
+        if (isNegation)
+          return value
+            .map((item) => comparator(item, context[contextKey] as string))
+            .every((result) => result);
+
+        return value
+          .map((item) => comparator(item, context[contextKey] as string))
+          .some((result) => result);
       })
       .every((result) => result);
   }
 
   checkNumericCondition(
     condition: { [key: string]: string | string[] },
-    context: AWSContext,
-    comparator: (condition: number, contextNumber: number) => boolean
+    context: RequestContext,
+    comparator: (condition: number, contextNumber: number) => boolean,
+    isIfExists: boolean
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
+        if (isIfExists && !context[contextKey]) return true;
+
         return comparator(
           parseInt(condition[contextKey] as string),
           parseInt(context[contextKey] as string)
@@ -311,10 +392,13 @@ export class IAMPolicyEngine {
   // Boolean matching
   checkBoolCondition(
     condition: { [key: string]: string | string[] },
-    context: AWSContext
+    context: RequestContext,
+    isIfExists: boolean
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
+        if (isIfExists && !context[contextKey]) return true;
+
         return (
           parseBool(condition[contextKey]) === parseBool(context[contextKey])
         );
@@ -324,42 +408,18 @@ export class IAMPolicyEngine {
 
   checkDateCondition(
     condition: { [key: string]: string | string[] },
-    context: AWSContext,
-    comparator: (condition: Date, contextValue: Date) => boolean
+    context: RequestContext,
+    comparator: (condition: Date, contextValue: Date) => boolean,
+    isIfExists: boolean
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
+        if (isIfExists && !context[contextKey]) return true;
+
         return comparator(
           new Date(condition[contextKey] as string),
           new Date(context[contextKey] as string)
         );
-      })
-      .every((result) => result);
-  }
-
-  checkIpAddressCondition(
-    condition: { [key: string]: string | string[] },
-    context: AWSContext
-  ) {
-    return Object.keys(condition)
-      .map((contextKey) => {
-        let isAllowed = false;
-        const value = condition[contextKey];
-
-        if (isString(value)) {
-          if (ipRangeCheck(context[contextKey] as string, value)) {
-            isAllowed = true;
-          }
-        } else {
-          for (const item of value) {
-            if (ipRangeCheck(context[contextKey] as string, item)) {
-              isAllowed = true;
-              break;
-            }
-          }
-        }
-
-        return isAllowed;
       })
       .every((result) => result);
   }

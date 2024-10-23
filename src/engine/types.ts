@@ -30,6 +30,8 @@ export type Condition = {
   };
 };
 
-export type AWSContext = {
-  [key: string]: number | string | boolean;
+export type RequestContext = {
+  action: string;
+  resource: string;
+  [key: string]: string | string[];
 };
