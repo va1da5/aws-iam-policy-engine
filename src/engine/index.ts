@@ -1,12 +1,83 @@
 import { isString, parseBool } from "@/utils/genetic";
-import { Action, Condition, Policy, RequestContext, Resource } from "./types";
+import {
+  Action,
+  Condition,
+  Policy,
+  PolicyType,
+  Principal,
+  RequestContext,
+  Resource,
+} from "./types";
 import ipRangeCheck from "ip-range-check";
 
 export class IAMPolicyEngine {
   policy: Policy;
+  type: PolicyType;
 
-  constructor(policy: Policy) {
+  constructor(policy: Policy, policyType: PolicyType = "identity-based") {
     this.policy = policy;
+    this.type = policyType;
+    this.validate();
+  }
+
+  validate() {
+    if (
+      ["Version", "Statement"]
+        .map((item) => !Object.keys(this.policy).includes(item))
+        .some((missing) => missing)
+    )
+      throw new Error("Invalid policy format");
+
+    this.policy.Statement.map((statement, index) => {
+      const errorMsg = `Invalid statement ${index} format`;
+
+      const statementElements = Object.keys(statement);
+
+      switch (this.type) {
+        case "identity-based": {
+          if (
+            !statementElements.includes("Resource") &&
+            !statementElements.includes("NotResource")
+          )
+            throw new Error(`${errorMsg}: Resource or NotResource is required`);
+
+          if (statementElements.includes("Principal"))
+            throw new Error(`${errorMsg}: Principal not allowed`);
+          break;
+        }
+
+        case "resource-based": {
+          if (
+            !statementElements.includes("Principal") &&
+            !statementElements.includes("NotPrincipal")
+          )
+            throw new Error(
+              `${errorMsg}: Principal or NotPrincipal is required`
+            );
+
+          break;
+        }
+
+        case "trust": {
+          if (!statementElements.includes("Principal"))
+            throw new Error(`${errorMsg}: Principal is required`);
+
+          if (statementElements.includes("Resource"))
+            throw new Error(`${errorMsg}: Resource is not allowed`);
+          break;
+        }
+      }
+
+      ["Effect", "Action"].forEach((element) => {
+        if (!statementElements.includes(element))
+          throw new Error(`Invalid statement ${index}: ${element} is required`);
+      });
+
+      if (!["Allow", "Deny"].includes(statement.Effect))
+        throw new Error(
+          `Invalid statement ${index} format: incorrect Effect definition ${statement.Effect}`
+        );
+    });
   }
 
   // Main method to evaluate access
@@ -37,14 +108,17 @@ export class IAMPolicyEngine {
             );
           }
           case "Resource": {
+            if (!requestContext["resource"]) return false;
             return this.resourceMatches(
               requestContext["resource"],
-              statement[element]
+              statement[element] as Resource
             );
           }
+
           case "NotResource": {
+            if (!requestContext["resource"]) return false;
             return !this.resourceMatches(
-              requestContext["resource"],
+              requestContext["resource"] as string,
               statement[element] as Resource
             );
           }
@@ -53,6 +127,20 @@ export class IAMPolicyEngine {
             return this.conditionMatches(
               requestContext,
               statement[element] as Condition
+            );
+          }
+
+          case "Principal": {
+            return this.principalMatches(
+              requestContext,
+              statement[element] as Principal
+            );
+          }
+
+          case "NotPrincipal": {
+            return !this.principalMatches(
+              requestContext,
+              statement[element] as Principal
             );
           }
 
@@ -343,6 +431,45 @@ export class IAMPolicyEngine {
       .every((success) => success);
   }
 
+  principalMatches(context: RequestContext, principal: Principal) {
+    if (!context.principal) return false;
+
+    if (principal == "*") return true;
+
+    if (typeof principal !== "object")
+      throw new Error("Principal must be an object");
+
+    return Object.keys(principal)
+      .map((principalName: string) => {
+        switch (principalName) {
+          case "AWS": {
+            if (!principal.AWS) return true;
+            if (!context.principal || !context.principal[principalName])
+              return false;
+
+            if (principal[principalName] == "*") return true;
+
+            return this.checkAWSPrincipal(
+              principal.AWS,
+              context.principal[principalName] as string
+            );
+          }
+
+          default: {
+            if (!context.principal || !context.principal[principalName])
+              return false;
+            if (!principal[principalName]) return false;
+
+            return this.strictStringsMatch(
+              principal[principalName] as string | string[],
+              context.principal[principalName]
+            );
+          }
+        }
+      })
+      .every((result) => result);
+  }
+
   checkStringCondition(
     condition: { [key: string]: string | string[] },
     context: RequestContext,
@@ -424,6 +551,37 @@ export class IAMPolicyEngine {
       .every((result) => result);
   }
 
+  checkAWSPrincipal(
+    allowedPrincipals: string | string[],
+    requestPrincipal: string
+  ) {
+    const check = (allowedPrincipal: string, requestPrincipal: string) => {
+      // AWS account principals: only Account ID set in policy
+      if (!allowedPrincipal.includes(":"))
+        return allowedPrincipal === this.getAccountId(requestPrincipal);
+
+      // AWS account principals: full ARN
+      if (allowedPrincipal.includes(":") && !allowedPrincipal.includes("/"))
+        return (
+          this.getAccountId(allowedPrincipal) ===
+          this.getAccountId(requestPrincipal)
+        );
+
+      // IAM role/user principals
+      if (allowedPrincipal.includes(":") && allowedPrincipal.includes("/"))
+        return allowedPrincipal === requestPrincipal;
+    };
+
+    // Single entry defined
+    if (isString(allowedPrincipals))
+      return check(allowedPrincipals, requestPrincipal);
+
+    // Multiple Principals defined
+    return allowedPrincipals
+      .map((principal) => check(principal, requestPrincipal))
+      .some((result) => result);
+  }
+
   arnWildcards(arn: string) {
     return arn
       .split(":")
@@ -451,7 +609,6 @@ export class IAMPolicyEngine {
   }
 
   wildcardMatch(pattern: string, str: string) {
-    // Convert the pattern into a regular expression
     const regex = new RegExp(
       "^" +
         pattern
@@ -461,5 +618,18 @@ export class IAMPolicyEngine {
     );
 
     return regex.test(str);
+  }
+
+  strictStringsMatch(pattern: string | string[], str: string | string[]) {
+    if (isString(pattern)) return pattern === str;
+    if (isString(str)) return pattern.includes(str);
+
+    throw new Error("Unsupported array combination");
+  }
+
+  getAccountId(arn: string) {
+    const parts = arn.split(":");
+    if (parts.length < 5) throw new Error(`Invalid ARN: ${arn}`);
+    return parts[4];
   }
 }
