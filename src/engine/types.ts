@@ -46,5 +46,6 @@ export type RequestContext = {
     | string
     | string[]
     | { [key: string]: string | string[] }
-    | undefined;
+    | undefined
+    | null;
 };

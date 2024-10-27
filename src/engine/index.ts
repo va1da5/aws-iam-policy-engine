@@ -10,6 +10,12 @@ import {
 } from "./types";
 import ipRangeCheck from "ip-range-check";
 
+enum ConditionSetOperator {
+  None,
+  ForAllValues,
+  ForAnyValue,
+}
+
 export class IAMPolicyEngine {
   policy: Policy;
   type: PolicyType;
@@ -185,8 +191,19 @@ export class IAMPolicyEngine {
       .map((key) => {
         // capture if key ends with ..IfExists, remove it from key and pass flag indicating it to each handler
         let operator = key;
+        let setOperator = ConditionSetOperator.None;
         const isIfExists = key.endsWith("IfExists");
-        if (isIfExists) operator = key.replace("IfExists", "");
+
+        if (key.startsWith("ForAllValues:"))
+          setOperator = ConditionSetOperator.ForAllValues;
+
+        if (key.startsWith("ForAnyValue:"))
+          setOperator = ConditionSetOperator.ForAnyValue;
+
+        operator = operator
+          .replace("IfExists", "")
+          .replace("ForAllValues:", "")
+          .replace("ForAnyValue:", "");
 
         switch (operator) {
           case "StringEquals": {
@@ -194,6 +211,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value === conditionValue,
+              setOperator,
               isIfExists
             );
           }
@@ -203,6 +221,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value !== conditionValue,
+              setOperator,
               isIfExists,
               true
             );
@@ -215,6 +234,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) =>
                 value.toLocaleLowerCase() ===
                 conditionValue.toLocaleLowerCase(),
+              setOperator,
               isIfExists
             );
           }
@@ -226,6 +246,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) =>
                 value.toLocaleLowerCase() !==
                 conditionValue.toLocaleLowerCase(),
+              setOperator,
               isIfExists,
               true
             );
@@ -237,6 +258,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) =>
                 this.wildcardMatch(conditionValue, value),
+              setOperator,
               isIfExists
             );
           }
@@ -247,6 +269,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) =>
                 !this.wildcardMatch(conditionValue, value),
+              setOperator,
               isIfExists,
               true
             );
@@ -257,6 +280,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => this.arnMatch(conditionValue, value),
+              setOperator,
               isIfExists
             );
           }
@@ -266,6 +290,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => this.arnMatch(conditionValue, value),
+              setOperator,
               isIfExists
             );
           }
@@ -275,6 +300,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => !this.arnMatch(conditionValue, value),
+              setOperator,
               isIfExists,
               true
             );
@@ -285,6 +311,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => !this.arnMatch(conditionValue, value),
+              setOperator,
               isIfExists,
               true
             );
@@ -409,6 +436,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => ipRangeCheck(value, conditionValue),
+              setOperator,
               isIfExists
             );
           }
@@ -418,6 +446,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => !ipRangeCheck(value, conditionValue),
+              setOperator,
               isIfExists,
               true
             );
@@ -478,26 +507,64 @@ export class IAMPolicyEngine {
     condition: { [key: string]: string | string[] },
     context: RequestContext,
     comparator: (condition: string, contextValue: string) => boolean,
+    setOperator: ConditionSetOperator = ConditionSetOperator.None,
     isIfExists: boolean,
     isNegation: boolean = false
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
-        const value = condition[contextKey];
+        const conditionValue = condition[contextKey];
 
         if (isIfExists && !context[contextKey]) return true;
 
-        if (isString(value))
-          return comparator(value, context[contextKey] as string);
+        if (setOperator == ConditionSetOperator.None) {
+          if (!isString(context[contextKey]))
+            throw new Error(`${contextKey} context key must be a single value`);
 
-        if (isNegation)
-          return value
+          if (isString(conditionValue))
+            return comparator(conditionValue, context[contextKey] as string);
+
+          if (isNegation)
+            return conditionValue
+              .map((item) => comparator(item, context[contextKey] as string))
+              .every((result) => result);
+
+          return conditionValue
             .map((item) => comparator(item, context[contextKey] as string))
-            .every((result) => result);
+            .some((result) => result);
+        }
 
-        return value
-          .map((item) => comparator(item, context[contextKey] as string))
-          .some((result) => result);
+        if (!context[contextKey]) return true;
+        if (context[contextKey]?.length == 0) return true;
+
+        if (isString(context[contextKey]))
+          throw new Error(
+            `${contextKey} context key must be an array of values`
+          );
+
+        const results = (context[contextKey] as string[]).map(
+          (contextValue) => {
+            return (
+              (conditionValue as string[])
+                .map((item) => comparator(item, contextValue))
+                .filter((valid) => (isNegation ? !valid : valid)).length > 0
+            );
+          }
+        );
+
+        if (setOperator == ConditionSetOperator.ForAllValues) {
+          if (isNegation) return results.every((results) => !results);
+
+          return results.every((result) => result);
+        }
+
+        if (setOperator == ConditionSetOperator.ForAnyValue) {
+          if (isNegation) return results.some((results) => !results);
+
+          return results.some((result) => result);
+        }
+
+        throw new Error(`Unsupported set operator: ${setOperator}`);
       })
       .every((result) => result);
   }
@@ -561,12 +628,14 @@ export class IAMPolicyEngine {
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
-        const isExpected = parseBool(condition[contextKey]);
-        const isPresent =
-          contextKey in context && hasValue(context[contextKey]);
+        const isNull = parseBool(condition[contextKey]);
 
-        console.log(`expected: ${isExpected} == ${contextKey}=${isPresent}`);
-        return isExpected == isPresent;
+        const isDefined =
+          contextKey in context &&
+          hasValue(context[contextKey]) &&
+          (context[contextKey] as string | string[]).length > 0;
+
+        return !isNull == isDefined;
       })
       .every((result) => result);
   }

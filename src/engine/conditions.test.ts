@@ -956,7 +956,7 @@ describe("Test Conditions", () => {
         },
         { Null: { "aws:TokenIssueTime": "true" } }
       )
-    ).toBeTruthy();
+    ).toBeFalsy();
 
     expect(
       engine.conditionMatches(
@@ -966,7 +966,7 @@ describe("Test Conditions", () => {
         },
         { Null: { "aws:TokenIssueTime": "false" } }
       )
-    ).toBeTruthy();
+    ).toBeFalsy();
 
     expect(
       engine.conditionMatches(
@@ -976,7 +976,7 @@ describe("Test Conditions", () => {
         },
         { Null: { "aws:TokenIssueTime": "true" } }
       )
-    ).toBeFalsy();
+    ).toBeTruthy();
 
     expect(
       engine.conditionMatches(
@@ -986,16 +986,290 @@ describe("Test Conditions", () => {
         },
         { Null: { "aws:TokenIssueTime": "false" } }
       )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TokenIssueTime": null,
+        },
+        { Null: { "aws:TokenIssueTime": "true" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TokenIssueTime": "",
+        },
+        { Null: { "aws:TokenIssueTime": "true" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TokenIssueTime": "",
+        },
+        { Null: { "aws:TokenIssueTime": "false" } }
+      )
+    ).toBeFalsy();
+  });
+
+  test("Condition ForAllValues:String*", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": "",
+        },
+        {
+          "ForAllValues:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": null,
+        },
+        {
+          "ForAllValues:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+        },
+        {
+          "ForAllValues:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["terraform", "poc"],
+        },
+        {
+          "ForAllValues:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["terraform", "poc"],
+        },
+        {
+          "ForAllValues:StringEquals": {
+            "aws:TagKeys": ["terraform", "test"],
+          },
+        }
+      )
     ).toBeFalsy();
 
     expect(
       engine.conditionMatches(
         {
           action: "",
-          "aws:TokenIssueTime": undefined,
+          "aws:TagKeys": ["abc", "cde"],
         },
-        { Null: { "aws:TokenIssueTime": "true" } }
+        {
+          "ForAllValues:StringNotEquals": {
+            "aws:TagKeys": ["www", "abc"],
+          },
+        }
       )
     ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["abc", "cde"],
+        },
+        {
+          "ForAllValues:StringNotEquals": {
+            "aws:TagKeys": ["qqq", "www"],
+          },
+        }
+      )
+    ).toBeTruthy();
+  });
+
+  test("Condition ForAnyValue:String*", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": "",
+        },
+        {
+          "ForAnyValue:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": null,
+        },
+        {
+          "ForAnyValue:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+        },
+        {
+          "ForAnyValue:StringEquals": {
+            "aws:TagKeys": ["poc", "terraform", "test"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["aaa", "bbb", "ccc"],
+        },
+        {
+          "ForAnyValue:StringEquals": {
+            "aws:TagKeys": ["aaa", "eee", "ddd"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["zzz", "bbb", "ccc"],
+        },
+        {
+          "ForAnyValue:StringEquals": {
+            "aws:TagKeys": ["aaa", "eee", "ddd"],
+          },
+        }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["aaa", "bbb", "ccc"],
+        },
+        {
+          "ForAnyValue:StringNotEquals": {
+            "aws:TagKeys": ["qqq", "eee", "ddd"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["aaa", "bbb"],
+        },
+        {
+          "ForAnyValue:StringNotEquals": {
+            "aws:TagKeys": ["aaa", "eee", "ddd"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["aaa", "bbb"],
+        },
+        {
+          "ForAnyValue:StringNotEquals": {
+            "aws:TagKeys": ["aaa", "bbb", "ddd"],
+          },
+        }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": ["aaa"],
+        },
+        {
+          "ForAnyValue:StringNotEquals": {
+            "aws:TagKeys": ["aaa", "bbb", "ddd"],
+          },
+        }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": [],
+        },
+        {
+          "ForAnyValue:StringNotEquals": {
+            "aws:TagKeys": ["aaa", "bbb", "ddd"],
+          },
+        }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TagKeys": [],
+        },
+        {
+          "ForAllValues:StringNotEquals": {
+            "aws:TagKeys": ["aaa", "bbb", "ddd"],
+          },
+        }
+      )
+    ).toBeTruthy();
   });
 });

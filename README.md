@@ -6,7 +6,7 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 
 - [x] Principle/NotPrinciple
 - [x] Add Null condition
-- [ ] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
+- [x] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
 - [ ] Support for variables in policies
 
 ## AWS IAM Policies
@@ -25,6 +25,7 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 
 ## References
 
+- [How IAM works](https://docs.aws.amazon.com/IAM/latest/UserGuide/intro-structure.html#intro-structure-request)
 - [Why AWS IAM is so hard to use](https://www.effectiveiam.com/why-aws-iam-is-so-hard-to-use)
 - [Policy summary (list of services)](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_understand-policy-summary.html)
 - [IAM JSON policy element reference](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements.html)
@@ -37,3 +38,4 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [Identity-based policies vs Resource-based policies](https://www.reddit.com/r/aws/comments/18xjw7x/identitybased_policies_vs_resourcebased_policies/)
 - [Grammar of the IAM JSON policy language](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_grammar.html)
 - [How to use trust policies with IAM roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/)
+- [AWS IAM Policy Condition Operators Explained](https://iam.cloudcopilot.io/resources/operators)
