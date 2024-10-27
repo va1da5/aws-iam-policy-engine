@@ -7,6 +7,7 @@ import {
   Principal,
   RequestContext,
   Resource,
+  Statement,
 } from "./types";
 import ipRangeCheck from "ip-range-check";
 
@@ -88,7 +89,10 @@ export class IAMPolicyEngine {
 
   // Main method to evaluate access
   evaluate(requestContext: RequestContext) {
-    const statements = this.policy.Statement;
+    const statements = this.applyVariables(
+      this.policy.Statement,
+      requestContext
+    );
 
     let isAllowed = false;
 
@@ -163,6 +167,40 @@ export class IAMPolicyEngine {
     }
 
     return isAllowed;
+  }
+
+  applyVariables(statements: Statement[], context: RequestContext) {
+    let json = JSON.stringify(statements);
+
+    if (!json.includes("${")) return statements;
+
+    for (const variable of this.getPolicyVariables(json)) {
+      const contextValue = context[variable];
+      if (!hasValue(contextValue))
+        throw new Error(`Context key ${variable} is required by the policy`);
+
+      if (!isString(contextValue))
+        throw new Error(
+          `Context key ${variable} must be a string value as per policy variable requirement`
+        );
+
+      json = json.replace(
+        new RegExp(`\\$\\{${variable}\\}`, "g"),
+        contextValue
+      );
+    }
+    return JSON.parse(json);
+  }
+
+  getPolicyVariables(json: string) {
+    const regex = /\$\{([^}]+)\}/g;
+    const matches = [];
+    let match;
+
+    while ((match = regex.exec(json)) !== null) {
+      matches.push(match[1]);
+    }
+    return matches;
   }
 
   // Check if action matches
