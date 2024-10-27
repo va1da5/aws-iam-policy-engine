@@ -1,4 +1,4 @@
-import { isString, parseBool } from "@/utils/genetic";
+import { hasValue, isString, parseBool } from "@/utils/genetic";
 import {
   Action,
   Condition,
@@ -423,6 +423,10 @@ export class IAMPolicyEngine {
             );
           }
 
+          case "Null": {
+            return this.checkNullCondition(condition[key], context);
+          }
+
           default: {
             throw new Error(`Unsupported condition: ${key}`);
           }
@@ -547,6 +551,22 @@ export class IAMPolicyEngine {
           new Date(condition[contextKey] as string),
           new Date(context[contextKey] as string)
         );
+      })
+      .every((result) => result);
+  }
+
+  checkNullCondition(
+    condition: { [key: string]: string | string[] },
+    context: RequestContext
+  ) {
+    return Object.keys(condition)
+      .map((contextKey) => {
+        const isExpected = parseBool(condition[contextKey]);
+        const isPresent =
+          contextKey in context && hasValue(context[contextKey]);
+
+        console.log(`expected: ${isExpected} == ${contextKey}=${isPresent}`);
+        return isExpected == isPresent;
       })
       .every((result) => result);
   }

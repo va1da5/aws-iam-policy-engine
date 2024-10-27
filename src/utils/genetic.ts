@@ -33,3 +33,7 @@ export function parseBool(variable: unknown) {
 
   return !!variable;
 }
+
+export function hasValue(variable: unknown) {
+  return !isUndefined(variable) && !isNull(variable);
+}

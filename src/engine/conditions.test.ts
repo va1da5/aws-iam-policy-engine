@@ -946,4 +946,56 @@ describe("Test Conditions", () => {
       )
     ).toBeTruthy();
   });
+
+  test("Condition Null testing", () => {
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
+        },
+        { Null: { "aws:TokenIssueTime": "true" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:SourceIp": "203.0.113.2",
+        },
+        { Null: { "aws:TokenIssueTime": "false" } }
+      )
+    ).toBeTruthy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:SourceIp": "203.0.113.2",
+        },
+        { Null: { "aws:TokenIssueTime": "true" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
+        },
+        { Null: { "aws:TokenIssueTime": "false" } }
+      )
+    ).toBeFalsy();
+
+    expect(
+      engine.conditionMatches(
+        {
+          action: "",
+          "aws:TokenIssueTime": undefined,
+        },
+        { Null: { "aws:TokenIssueTime": "true" } }
+      )
+    ).toBeFalsy();
+  });
 });

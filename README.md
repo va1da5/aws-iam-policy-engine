@@ -5,8 +5,8 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 ## TODOs
 
 - [x] Principle/NotPrinciple
-- [ ] Add Null condition
-- [ ] Support for multiple context values
+- [x] Add Null condition
+- [ ] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
 - [ ] Support for variables in policies
 
 ## AWS IAM Policies
