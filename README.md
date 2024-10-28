@@ -7,6 +7,7 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [x] Principle/NotPrinciple
 - [x] Add Null condition
 - [x] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
+- [ ] More Tests for multivalued context
 - [x] Support for variables in policies
 - [ ] Tests for variables in policies
 
@@ -40,3 +41,5 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [Grammar of the IAM JSON policy language](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_grammar.html)
 - [How to use trust policies with IAM roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/)
 - [AWS IAM Policy Condition Operators Explained](https://iam.cloudcopilot.io/resources/operators)
+- [Policies and permissions in AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html)
+- [cloud-copilot/iam-data](https://github.com/cloud-copilot/iam-data)

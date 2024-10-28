@@ -193,3 +193,78 @@ describe("Test policy functionality", () => {
     ).toBeFalsy();
   });
 });
+
+describe("Allow access to specific region only", () => {
+  const policy = new IAMPolicyEngine({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Sid: "EnableDisableHongKong",
+        Effect: "Allow",
+        Action: ["account:EnableRegion", "account:DisableRegion"],
+        Resource: "*",
+        Condition: {
+          StringEquals: { "account:TargetRegion": "us-east-1" },
+        },
+      },
+      {
+        Sid: "ViewConsole",
+        Effect: "Allow",
+        Action: ["account:ListRegions"],
+        Resource: "*",
+      },
+    ],
+  });
+
+  test("Valid", () => {
+    expect(
+      policy.evaluate({
+        action: "account:DisableRegion",
+        resource: "arn:aws:account:us-east-1:123456789012:account",
+        "account:TargetRegion": "us-east-1",
+      })
+    ).toBeTruthy();
+
+    expect(
+      policy.evaluate({
+        action: "account:EnableRegion",
+        resource: "arn:aws:account:us-east-1:123456789012:account",
+        "account:TargetRegion": "us-east-1",
+      })
+    ).toBeTruthy();
+
+    expect(
+      policy.evaluate({
+        action: "account:ListRegions",
+        resource: "arn:aws:account:us-east-1:123456789012:account",
+        "account:TargetRegion": "us-east-1",
+      })
+    ).toBeTruthy();
+
+    expect(
+      policy.evaluate({
+        action: "account:ListRegions",
+        resource: "arn:aws:account:us-east-1:123456789012:account",
+        "account:TargetRegion": "us-west-1",
+      })
+    ).toBeTruthy();
+  });
+
+  test("Invalid", () => {
+    expect(
+      policy.evaluate({
+        action: "account:DisableRegion",
+        resource: "arn:aws:account:us-east-1:123456789012:account",
+        "account:TargetRegion": "us-west-1",
+      })
+    ).toBeFalsy();
+
+    expect(
+      policy.evaluate({
+        action: "account:EnableRegion",
+        resource: "arn:aws:account:us-east-1:123456789012:account",
+        "account:TargetRegion": "us-west-1",
+      })
+    ).toBeFalsy();
+  });
+});
