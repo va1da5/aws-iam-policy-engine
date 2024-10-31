@@ -10,8 +10,6 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
-    /* Make JEST happy */
-    // "esModuleInterop": true,
     "paths": {
       "@/*": [
         "./src/*"
