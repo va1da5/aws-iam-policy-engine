@@ -1,97 +1,170 @@
-import { hasValue, isString, parseBool } from "@/utils/genetic";
+import {
+  hasValue,
+  intersection,
+  isArray,
+  isObject,
+  isString,
+  parseBool,
+} from "@/utils/genetic";
 import {
   Action,
   Condition,
   Policy,
-  PolicyType,
   Principal,
   RequestContext,
   Resource,
   Statement,
 } from "./types";
 import ipRangeCheck from "ip-range-check";
-
-enum ConditionSetOperator {
-  None,
-  ForAllValues,
-  ForAnyValue,
-}
+import {
+  ConditionSetOperator,
+  mutuallyExclusiveElements,
+  PolicyType,
+  requiredPolicyElements,
+  validEffectValues,
+  validPartitions,
+  validPolicyVersions,
+  validStatementElements,
+} from "./values";
 
 export class IAMPolicyEngine {
   policy: Policy;
   type: PolicyType;
 
-  constructor(policy: Policy, policyType: PolicyType = "identity-based") {
+  constructor(policy: Policy, policyType: PolicyType = PolicyType.Identity) {
     this.policy = policy;
     this.type = policyType;
     this.validate();
   }
 
   validate() {
-    if (
-      ["Version", "Statement"]
-        .map((item) => !Object.keys(this.policy).includes(item))
-        .some((missing) => missing)
-    )
-      throw new Error("Invalid policy format");
+    requiredPolicyElements.forEach((value) => {
+      if (!Object.keys(this.policy).includes(value))
+        throw new Error(`Invalid policy format: '${value}' element is missing`);
+    });
 
-    this.policy.Statement.map((statement, index) => {
+    if (!validPolicyVersions.includes(this.policy.Version))
+      throw new Error(
+        `Incorrect policy version. Allowed: ${validPolicyVersions.join(", ")}`,
+      );
+
+    this.policy.Statement.forEach((statement, index) => {
       const errorMsg = `Invalid statement ${index} format`;
 
       const statementElements = Object.keys(statement);
 
-      switch (this.type) {
-        case "identity-based": {
-          if (
-            !statementElements.includes("Resource") &&
-            !statementElements.includes("NotResource")
-          )
-            throw new Error(`${errorMsg}: Resource or NotResource is required`);
+      statementElements.forEach((element) => {
+        if (!validStatementElements.includes(element))
+          throw new Error(
+            `${errorMsg}: Unsupported statement element '${element}'`,
+          );
+      });
 
-          if (statementElements.includes("Principal"))
-            throw new Error(`${errorMsg}: Principal not allowed`);
+      switch (this.type) {
+        case PolicyType.Identity: {
+          if (
+            !intersection(statementElements, ["Resource", "NotResource"]).length
+          )
+            throw new Error(
+              `${errorMsg}: Resource or NotResource element is required`,
+            );
+
+          if (
+            intersection(statementElements, ["Principal", "NotPrincipal"])
+              .length
+          )
+            throw new Error(
+              `${errorMsg}: Principal and NotPrincipal elements are not allowed`,
+            );
           break;
         }
 
-        case "resource-based": {
+        case PolicyType.Resource: {
           if (
-            !statementElements.includes("Principal") &&
-            !statementElements.includes("NotPrincipal")
+            !intersection(statementElements, ["Principal", "NotPrincipal"])
+              .length
           )
             throw new Error(
-              `${errorMsg}: Principal or NotPrincipal is required`
+              `${errorMsg}: Principal or NotPrincipal element is required`,
             );
 
           break;
         }
 
-        case "trust": {
+        case PolicyType.Trust: {
           if (!statementElements.includes("Principal"))
-            throw new Error(`${errorMsg}: Principal is required`);
+            throw new Error(`${errorMsg}: Principal element is required`);
 
-          if (statementElements.includes("Resource"))
-            throw new Error(`${errorMsg}: Resource is not allowed`);
+          if (
+            intersection(statementElements, ["Resource", "NotResource"]).length
+          )
+            throw new Error(
+              `${errorMsg}: Resource and NotResource elements are not allowed`,
+            );
           break;
         }
       }
 
-      ["Effect", "Action"].forEach((element) => {
-        if (!statementElements.includes(element))
-          throw new Error(`Invalid statement ${index}: ${element} is required`);
+      mutuallyExclusiveElements.forEach((elements) => {
+        if (intersection(statementElements, elements).length == elements.length)
+          throw new Error(
+            `${errorMsg}: ${elements.join(" and ")} are mutually exclusive`,
+          );
       });
 
-      if (!["Allow", "Deny"].includes(statement.Effect))
+      if (!statementElements.includes("Effect"))
+        throw new Error(`${errorMsg}: Effect element is required`);
+
+      if (!validEffectValues.includes(statement.Effect))
         throw new Error(
-          `Invalid statement ${index} format: incorrect Effect definition ${statement.Effect}`
+          `${errorMsg}: incorrect Effect definition '${statement.Effect}'`,
         );
+
+      ["Action", "NotAction", "Resource", "NotResource"].forEach((element) => {
+        if (!statementElements.includes(element)) return;
+
+        if (!this.validValue(statement[element as keyof Statement]))
+          throw new Error(`${errorMsg}: incorrect ${element} definition`);
+      });
+
+      ["Resource", "NotResource"].forEach((element) => {
+        if (!statementElements.includes(element)) return;
+
+        const value = statement[element as keyof Statement];
+
+        if (!value) return;
+
+        try {
+          if (isString(value)) return this.validateArn(value);
+          if (isArray(value)) return value.forEach(this.validateArn);
+        } catch (e) {
+          throw new Error(
+            `${errorMsg}: incorrect ${element} definition. ${e.message}`,
+          );
+        }
+      });
     });
   }
 
-  // Main method to evaluate access
+  validValue(value: unknown): boolean {
+    if (!hasValue(value)) return false;
+    if (isString(value)) return value.length > 0;
+    if (isArray(value))
+      return value
+        .map((v: unknown) => this.validValue(v))
+        .every((valid) => valid);
+    if (isObject(value)) {
+      return Object.keys(value)
+        .map((k) => this.validValue(value[k as keyof typeof value]))
+        .every((valid) => valid);
+    }
+    return false;
+  }
+
   evaluate(requestContext: RequestContext) {
     const statements = this.applyVariables(
       this.policy.Statement,
-      requestContext
+      requestContext,
     );
 
     let isAllowed = false;
@@ -108,20 +181,20 @@ export class IAMPolicyEngine {
           case "Action": {
             return this.actionMatches(
               requestContext["action"],
-              statement[element]
+              statement[element],
             );
           }
           case "NotAction": {
             return this.actionMatches(
               requestContext["action"],
-              statement[element] as Action
+              statement[element] as Action,
             );
           }
           case "Resource": {
             if (!requestContext["resource"]) return false;
             return this.resourceMatches(
               requestContext["resource"],
-              statement[element] as Resource
+              statement[element] as Resource,
             );
           }
 
@@ -129,28 +202,28 @@ export class IAMPolicyEngine {
             if (!requestContext["resource"]) return false;
             return !this.resourceMatches(
               requestContext["resource"] as string,
-              statement[element] as Resource
+              statement[element] as Resource,
             );
           }
 
           case "Condition": {
             return this.conditionMatches(
               requestContext,
-              statement[element] as Condition
+              statement[element] as Condition,
             );
           }
 
           case "Principal": {
             return this.principalMatches(
               requestContext,
-              statement[element] as Principal
+              statement[element] as Principal,
             );
           }
 
           case "NotPrincipal": {
             return !this.principalMatches(
               requestContext,
-              statement[element] as Principal
+              statement[element] as Principal,
             );
           }
 
@@ -181,12 +254,12 @@ export class IAMPolicyEngine {
 
       if (!isString(contextValue))
         throw new Error(
-          `Context key ${variable} must be a string value as per policy variable requirement`
+          `Context key ${variable} must be a string value as per policy variable requirement`,
         );
 
       json = json.replace(
         new RegExp(`\\$\\{${variable}\\}`, "g"),
-        contextValue
+        contextValue,
       );
     }
     return JSON.parse(json);
@@ -203,7 +276,6 @@ export class IAMPolicyEngine {
     return matches;
   }
 
-  // Check if action matches
   actionMatches(action: string, actions: Action) {
     if (isString(actions)) return this.wildcardMatch(actions, action);
 
@@ -212,13 +284,17 @@ export class IAMPolicyEngine {
     });
   }
 
-  // Check if resource matches
   resourceMatches(resource: string, resources: Resource) {
-    if (isString(resources))
-      return this.wildcardMatch(this.arnWildcards(resources), resource);
+    if (isString(resources)) {
+      if (!resources.length) return false;
+      if (resources == "*") return true;
+      return this.arnMatch(resources, resource);
+    }
 
     return resources.some((r) => {
-      return this.wildcardMatch(this.arnWildcards(r), resource);
+      if (!r.length) return false;
+      if (r == "*") return true;
+      return this.arnMatch(r, resource);
     });
   }
 
@@ -250,7 +326,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) => value === conditionValue,
               setOperator,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -261,7 +337,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) => value !== conditionValue,
               setOperator,
               isIfExists,
-              true
+              true,
             );
           }
 
@@ -273,7 +349,7 @@ export class IAMPolicyEngine {
                 value.toLocaleLowerCase() ===
                 conditionValue.toLocaleLowerCase(),
               setOperator,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -286,7 +362,7 @@ export class IAMPolicyEngine {
                 conditionValue.toLocaleLowerCase(),
               setOperator,
               isIfExists,
-              true
+              true,
             );
           }
 
@@ -297,7 +373,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) =>
                 this.wildcardMatch(conditionValue, value),
               setOperator,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -309,7 +385,7 @@ export class IAMPolicyEngine {
                 !this.wildcardMatch(conditionValue, value),
               setOperator,
               isIfExists,
-              true
+              true,
             );
           }
 
@@ -319,7 +395,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) => this.arnMatch(conditionValue, value),
               setOperator,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -329,7 +405,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) => this.arnMatch(conditionValue, value),
               setOperator,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -340,7 +416,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) => !this.arnMatch(conditionValue, value),
               setOperator,
               isIfExists,
-              true
+              true,
             );
           }
 
@@ -351,7 +427,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) => !this.arnMatch(conditionValue, value),
               setOperator,
               isIfExists,
-              true
+              true,
             );
           }
 
@@ -360,7 +436,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value === conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -369,7 +445,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value !== conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -378,7 +454,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value < conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -387,7 +463,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value <= conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -396,7 +472,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value > conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -405,7 +481,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value >= conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -419,7 +495,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) =>
                 value.getTime() === conditionValue.getTime(),
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -429,7 +505,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) =>
                 value.getTime() !== conditionValue.getTime(),
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -438,7 +514,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value < conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -447,7 +523,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value <= conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -456,7 +532,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value > conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -465,7 +541,7 @@ export class IAMPolicyEngine {
               condition[key],
               context,
               (conditionValue, value) => value >= conditionValue,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -475,7 +551,7 @@ export class IAMPolicyEngine {
               context,
               (conditionValue, value) => ipRangeCheck(value, conditionValue),
               setOperator,
-              isIfExists
+              isIfExists,
             );
           }
 
@@ -486,7 +562,7 @@ export class IAMPolicyEngine {
               (conditionValue, value) => !ipRangeCheck(value, conditionValue),
               setOperator,
               isIfExists,
-              true
+              true,
             );
           }
 
@@ -522,7 +598,7 @@ export class IAMPolicyEngine {
 
             return this.checkAWSPrincipal(
               principal.AWS,
-              context.principal[principalName] as string
+              context.principal[principalName] as string,
             );
           }
 
@@ -533,7 +609,7 @@ export class IAMPolicyEngine {
 
             return this.strictStringsMatch(
               principal[principalName] as string | string[],
-              context.principal[principalName]
+              context.principal[principalName],
             );
           }
         }
@@ -547,7 +623,7 @@ export class IAMPolicyEngine {
     comparator: (condition: string, contextValue: string) => boolean,
     setOperator: ConditionSetOperator = ConditionSetOperator.None,
     isIfExists: boolean,
-    isNegation: boolean = false
+    isNegation: boolean = false,
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -577,7 +653,7 @@ export class IAMPolicyEngine {
 
         if (isString(context[contextKey]))
           throw new Error(
-            `${contextKey} context key must be an array of values`
+            `${contextKey} context key must be an array of values`,
           );
 
         const results = (context[contextKey] as string[]).map(
@@ -587,7 +663,7 @@ export class IAMPolicyEngine {
                 .map((item) => comparator(item, contextValue))
                 .filter((valid) => (isNegation ? !valid : valid)).length > 0
             );
-          }
+          },
         );
 
         if (setOperator == ConditionSetOperator.ForAllValues) {
@@ -611,7 +687,7 @@ export class IAMPolicyEngine {
     condition: { [key: string]: string | string[] },
     context: RequestContext,
     comparator: (condition: number, contextNumber: number) => boolean,
-    isIfExists: boolean
+    isIfExists: boolean,
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -619,17 +695,16 @@ export class IAMPolicyEngine {
 
         return comparator(
           parseInt(condition[contextKey] as string),
-          parseInt(context[contextKey] as string)
+          parseInt(context[contextKey] as string),
         );
       })
       .every((result) => result);
   }
 
-  // Boolean matching
   checkBoolCondition(
     condition: { [key: string]: string | string[] },
     context: RequestContext,
-    isIfExists: boolean
+    isIfExists: boolean,
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -646,7 +721,7 @@ export class IAMPolicyEngine {
     condition: { [key: string]: string | string[] },
     context: RequestContext,
     comparator: (condition: Date, contextValue: Date) => boolean,
-    isIfExists: boolean
+    isIfExists: boolean,
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -654,7 +729,7 @@ export class IAMPolicyEngine {
 
         return comparator(
           new Date(condition[contextKey] as string),
-          new Date(context[contextKey] as string)
+          new Date(context[contextKey] as string),
         );
       })
       .every((result) => result);
@@ -662,7 +737,7 @@ export class IAMPolicyEngine {
 
   checkNullCondition(
     condition: { [key: string]: string | string[] },
-    context: RequestContext
+    context: RequestContext,
   ) {
     return Object.keys(condition)
       .map((contextKey) => {
@@ -680,7 +755,7 @@ export class IAMPolicyEngine {
 
   checkAWSPrincipal(
     allowedPrincipals: string | string[],
-    requestPrincipal: string
+    requestPrincipal: string,
   ) {
     const check = (allowedPrincipal: string, requestPrincipal: string) => {
       // AWS account principals: only Account ID set in policy
@@ -716,7 +791,40 @@ export class IAMPolicyEngine {
       .join(":");
   }
 
+  validateArn(arn: string) {
+    if (arn == "*") return true;
+
+    // prevent split of AWS variables
+    arn = arn.replace(/\$\{([^}]+)\}/g, "${variable-placeholder}");
+    const parts = arn.split(":");
+
+    if (parts.length != 6) throw new Error(`Invalid ARN: "${arn}"`);
+
+    const [prefix, partition, service, region, accountId, resource] = parts;
+
+    if (prefix != "arn") throw new Error(`Invalid ARN: "${arn}"`);
+
+    if (!validPartitions.includes(partition))
+      throw new Error(
+        `Invalid ARN partition "${partition}". Supported values ${validPartitions.join(", ")}.`,
+      );
+
+    if (!service.length || service != service.toLowerCase()) {
+      throw new Error(`Invalid ARN service: "${service}"`);
+    }
+
+    if (region != region.toLocaleLowerCase())
+      throw new Error(`Invalid ARN region: ${region}`);
+
+    if (accountId.length && accountId != "*" && !/\d{12}/.test(accountId))
+      throw new Error(`Invalid ARN account ID: "${accountId}"`);
+
+    if (!resource.length) throw new Error(`Empty ARN resource part`);
+  }
+
   arnMatch(pattern: string, str: string) {
+    if (pattern == "*") return true;
+
     const patternParts = pattern.split(":");
     const strParts = str.split(":");
 
@@ -726,22 +834,22 @@ export class IAMPolicyEngine {
 
     return patternParts
       .map((part, index) => {
-        // If the pattern part is empty, it matches any value
-        if (!part.length && index !== patternParts.length - 1) return true;
+        // If the part is empty and is either region or account ID and is empty
+        if (!part.length && [3, 4].includes(index)) return true;
         if (part === "*" && strParts[index].length > 0) return true;
-
-        return this.wildcardMatch(part, strParts[index]);
+        return this.wildcardMatch(part, strParts[index], true);
       })
       .every((result) => result);
   }
 
-  wildcardMatch(pattern: string, str: string) {
+  wildcardMatch(pattern: string, str: string, caseSensitive: boolean = false) {
     const regex = new RegExp(
       "^" +
         pattern
           .replace(/\?/g, ".") // Replace '?' with '.' (any single character)
           .replace(/\*/g, ".*?") + // Replace '*' with '.*' (any combination of characters)
-        "$" // Ensure the whole string matches
+        "$", // Ensure the whole string matches
+      caseSensitive ? undefined : "i",
     );
 
     return regex.test(str);

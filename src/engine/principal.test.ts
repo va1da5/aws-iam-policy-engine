@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 
 import { IAMPolicyEngine } from "./index";
+import { PolicyType } from "./values";
 
 describe("Test policy principal functionality", () => {
   test("Principal in identity-based policy", () => {
@@ -20,9 +21,33 @@ describe("Test policy principal functionality", () => {
             },
           ],
         },
-        "identity-based"
+        PolicyType.Identity,
       );
-    }).toThrowError(/^Invalid statement 0 format: Principal not allowed$/);
+    }).toThrowError(
+      /^Invalid statement 0 format: Principal and NotPrincipal elements are not allowed$/,
+    );
+
+    expect(() => {
+      new IAMPolicyEngine(
+        {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Sid: "Enable IAM User Permissions",
+              Effect: "Allow",
+              NotPrincipal: {
+                AWS: "arn:aws:iam::111122223333:root",
+              },
+              Action: "kms:*",
+              Resource: "*",
+            },
+          ],
+        },
+        PolicyType.Identity,
+      );
+    }).toThrowError(
+      /^Invalid statement 0 format: Principal and NotPrincipal elements are not allowed$/,
+    );
   });
 
   test("Wildcard principal wildcard", () => {
@@ -39,7 +64,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "resource-based"
+      PolicyType.Resource,
     );
 
     expect(
@@ -48,7 +73,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
         principal: { AWS: "arn:aws:iam::123456789012:user/alice" },
-      })
+      }),
     ).toBeTruthy();
   });
 
@@ -68,7 +93,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "resource-based"
+      PolicyType.Resource,
     );
 
     expect(
@@ -77,7 +102,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
         principal: { AWS: "arn:aws:iam::123456789012:user/alice" },
-      })
+      }),
     ).toBeTruthy();
   });
 
@@ -97,7 +122,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "resource-based"
+      PolicyType.Resource,
     );
 
     expect(
@@ -106,7 +131,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
         principal: { AWS: "arn:aws:iam::111122223333:user/alice" },
-      })
+      }),
     ).toBeTruthy();
 
     expect(
@@ -115,7 +140,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/e1ba06a7-3bb5-4199-8551-265e9e63f634",
         principal: { AWS: "arn:aws:iam::111122223333:user/bob" },
-      })
+      }),
     ).toBeTruthy();
 
     expect(
@@ -124,7 +149,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/e1ba06a7-3bb5-4199-8551-265e9e63f634",
         principal: { AWS: "arn:aws:iam::123456789012:user/john" },
-      })
+      }),
     ).toBeFalsy();
   });
 
@@ -144,7 +169,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "resource-based"
+      PolicyType.Resource,
     );
 
     expect(
@@ -153,7 +178,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
         principal: { AWS: "arn:aws:iam::111122223333:user/alice" },
-      })
+      }),
     ).toBeTruthy();
 
     expect(
@@ -162,7 +187,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/e1ba06a7-3bb5-4199-8551-265e9e63f634",
         principal: { AWS: "arn:aws:iam::123456789012:user/john" },
-      })
+      }),
     ).toBeFalsy();
   });
 
@@ -191,7 +216,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "resource-based"
+      PolicyType.Resource,
     );
 
     expect(
@@ -200,7 +225,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
         principal: { AWS: "arn:aws:iam::111122223333:role/admin" },
-      })
+      }),
     ).toBeTruthy();
 
     expect(
@@ -209,7 +234,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
         principal: { AWS: "arn:aws:iam::111122223333:role/devops" },
-      })
+      }),
     ).toBeFalsy();
   });
 
@@ -227,7 +252,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "trust"
+      PolicyType.Trust,
     );
 
     expect(
@@ -236,7 +261,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:iam::111122223333:role/aws-service-role/eks.amazonaws.com/AWSServiceRoleForAmazonEKS",
         principal: { Service: "eks.amazonaws.com" },
-      })
+      }),
     ).toBeTruthy();
 
     expect(
@@ -245,7 +270,7 @@ describe("Test policy principal functionality", () => {
         resource:
           "arn:aws:iam::111122223333:role/aws-service-role/eks.amazonaws.com/AWSServiceRoleForAmazonEKS",
         principal: { Service: "ec2.amazonaws.com" },
-      })
+      }),
     ).toBeFalsy();
   });
 
@@ -276,7 +301,7 @@ describe("Test policy principal functionality", () => {
           },
         ],
       },
-      "resource-based"
+      PolicyType.Resource,
     );
 
     expect(
@@ -284,7 +309,7 @@ describe("Test policy principal functionality", () => {
         action: "s3:GetObject",
         resource: "arn:aws:s3::111122223333:bucket/test.jpg",
         principal: { AWS: "arn:aws:iam::111122223333:role/MyRole" },
-      })
+      }),
     ).toBeTruthy();
 
     expect(
@@ -292,7 +317,7 @@ describe("Test policy principal functionality", () => {
         action: "sts:GetObject",
         resource: "arn:aws:s3::111122223333:bucket/test.jpg",
         principal: { AWS: "arn:aws:iam::111122223333:role/SomeOtherRole" },
-      })
+      }),
     ).toBeFalsy();
   });
 });

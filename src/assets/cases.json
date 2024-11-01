@@ -1,0 +1,37 @@
+[
+    {
+        "requestContext": {
+            "action": "s3:ListBucket",
+            "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        },
+        "expected": "allow"
+    },
+    {
+        "requestContext": {
+            "action": "s3:GetObject",
+            "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        },
+        "expected": "allow"
+    },
+    {
+        "requestContext": {
+            "action": "s3:PutObject",
+            "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        },
+        "expected": "deny"
+    },
+    {
+        "requestContext": {
+            "action": "s3:PutBucketAcl",
+            "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        },
+        "expected": "deny"
+    },
+    {
+        "requestContext": {
+            "action": "s3:PutObjectTagging",
+            "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        },
+        "expected": "deny"
+    }
+]

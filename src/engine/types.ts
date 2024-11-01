@@ -4,18 +4,22 @@ export type Policy = {
   Id?: string;
 };
 
-export type PolicyType = "identity-based" | "resource-based" | "trust";
+export type PolicyType =
+  | "IDENTITY_POLICY"
+  | "RESOURCE_POLICY"
+  | "TRUST_POLICY"
+  | "SERVICE_CONTROL_POLICY";
 
 export type Statement = {
   Sid?: string;
   Effect: Effect;
   Principal?: Principal;
   NotPrincipal?: Principal;
-  Action: Action;
+  Action?: Action;
+  NotAction?: Action;
   Resource?: Resource;
   NotResource?: Resource;
   Condition?: Condition;
-  NotAction?: Action;
 };
 
 export type Effect = "Allow" | "Deny";

@@ -9,7 +9,6 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [x] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
 - [ ] More Tests for multivalued context
 - [x] Support for variables in policies
-- [ ] Tests for variables in policies
 
 ## AWS IAM Policies
 
@@ -43,3 +42,4 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [AWS IAM Policy Condition Operators Explained](https://iam.cloudcopilot.io/resources/operators)
 - [Policies and permissions in AWS Identity and Access Management](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html)
 - [cloud-copilot/iam-data](https://github.com/cloud-copilot/iam-data)
+- [@uiw/react-codemirror](https://www.npmjs.com/package/@uiw/react-codemirror)
