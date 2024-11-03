@@ -1,4 +1,4 @@
-import exercise from "./assets/1.json";
+import exercise from "./assets/3.json";
 
 import { useEffect, useState } from "react";
 import { IAMPolicyEngine } from "./engine";
@@ -12,9 +12,7 @@ import Status from "./components/status";
 import { Button } from "./components/ui/button";
 
 function App() {
-  const [policyData, setPolicyData] = useState(
-    JSON.stringify(exercise.initialTemplate, null, 2),
-  );
+  const [policyData, setPolicyData] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [allow, setAllow] = useState<boolean[]>([]);
   const [stats, setStats] = useState({ failed: 0, passed: 0 });
@@ -27,11 +25,15 @@ function App() {
       failed: testCases.length,
       passed: 0,
     });
+
+    setPolicyData(JSON.stringify(exercise.initialTemplate, null, 2));
   }, [exercise]);
 
   useEffect(() => {
+    if (!policyData.length) return;
+
     try {
-      const policyObject: Policy = JSON.parse(policyData);
+      const policyObject: Policy = JSON.parse(policyData as string);
       const policy = new IAMPolicyEngine(
         policyObject,
         exercise.policyType as PolicyType,
@@ -64,7 +66,10 @@ function App() {
       <div className="grid grid-cols-2 gap-6">
         <div className="w-full">
           <div className="rounded border border-solid border-zinc-200">
-            <Editor value={policyData} onChange={setPolicyData} />
+            <Editor
+              value={policyData as string}
+              onChange={policyData.length > 0 ? setPolicyData : (v) => {}}
+            />
           </div>
 
           {error.length > 0 && (
