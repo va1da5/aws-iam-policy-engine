@@ -3,7 +3,10 @@ import { describe, test, expect } from "vitest";
 import { IAMPolicyEngine } from "./index";
 
 describe("Test Conditions", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
+  const engine = new IAMPolicyEngine({
+    Version: "2012-10-17",
+    Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
+  });
 
   test("Condition StringEquals matches", () => {
     expect(
@@ -17,8 +20,8 @@ describe("Test Conditions", () => {
           StringEquals: {
             "aws:PrincipalTag/job-category": "iamuser-admin",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -34,8 +37,8 @@ describe("Test Conditions", () => {
           StringEquals: {
             "aws:PrincipalTag/job-category": "iamuser-admin",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -51,8 +54,8 @@ describe("Test Conditions", () => {
           StringEquals: {
             "aws:PrincipalTag/job-category": ["ec2-user", "iamuser-admin"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -70,8 +73,8 @@ describe("Test Conditions", () => {
             "aws:PrincipalTag/job-category": ["ec2-user", "iamuser-admin"],
             "aws:PrincipalTag/department": ["devops", "kubernetes"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -89,8 +92,8 @@ describe("Test Conditions", () => {
             "aws:PrincipalTag/job-category": ["ec2-user", "iamuser-admin"],
             "aws:PrincipalTag/department": ["devops", "kubernetes"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -108,8 +111,8 @@ describe("Test Conditions", () => {
             "aws:PrincipalTag/job-category": ["ec2-user", "iamuser-admin"],
             "aws:PrincipalTag/department": ["devops", "kubernetes"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -125,8 +128,8 @@ describe("Test Conditions", () => {
           StringNotEquals: {
             "aws:PrincipalTag/department": ["devops", "kubernetes"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -142,8 +145,8 @@ describe("Test Conditions", () => {
           StringNotEquals: {
             "aws:PrincipalTag/department": ["devops", "database"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -159,8 +162,8 @@ describe("Test Conditions", () => {
           StringEqualsIgnoreCase: {
             "aws:PrincipalTag/department": ["devops", "database"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -176,8 +179,8 @@ describe("Test Conditions", () => {
           StringEqualsIgnoreCase: {
             "aws:PrincipalTag/department": ["devops", "backend"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -193,8 +196,8 @@ describe("Test Conditions", () => {
           StringNotEqualsIgnoreCase: {
             "aws:PrincipalTag/department": ["devops", "backend"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -210,8 +213,8 @@ describe("Test Conditions", () => {
           StringNotEqualsIgnoreCase: {
             "aws:PrincipalTag/department": ["devops", "hr"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -227,8 +230,8 @@ describe("Test Conditions", () => {
           StringLike: {
             "aws:PrincipalTag/job-category": ["*-admin", "*-user"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -244,8 +247,8 @@ describe("Test Conditions", () => {
           StringLike: {
             "aws:PrincipalTag/job-category": ["*-admin", "*-user"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -261,8 +264,8 @@ describe("Test Conditions", () => {
           StringNotLike: {
             "aws:PrincipalTag/job-category": ["*-developer", "*-user"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -278,8 +281,8 @@ describe("Test Conditions", () => {
           StringNotLike: {
             "aws:PrincipalTag/job-category": ["*-developer", "*-user"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -296,8 +299,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -314,8 +317,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -330,8 +333,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail::111122223333:trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -346,8 +349,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:::trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -362,8 +365,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:::*",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -380,8 +383,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -396,8 +399,8 @@ describe("Test Conditions", () => {
           ArnLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:::",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -414,8 +417,8 @@ describe("Test Conditions", () => {
           ArnNotLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -432,8 +435,8 @@ describe("Test Conditions", () => {
           ArnNotLike: {
             "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -449,8 +452,8 @@ describe("Test Conditions", () => {
           NumericEquals: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -466,8 +469,8 @@ describe("Test Conditions", () => {
           NumericEquals: {
             "s3:max-keys": "5",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -483,8 +486,8 @@ describe("Test Conditions", () => {
           NumericNotEquals: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -500,8 +503,8 @@ describe("Test Conditions", () => {
           NumericNotEquals: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -517,8 +520,8 @@ describe("Test Conditions", () => {
           NumericLessThan: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -534,8 +537,8 @@ describe("Test Conditions", () => {
           NumericLessThanEquals: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -551,8 +554,8 @@ describe("Test Conditions", () => {
           NumericGreaterThan: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -568,8 +571,8 @@ describe("Test Conditions", () => {
           NumericGreaterThanEquals: {
             "s3:max-keys": "10",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -585,8 +588,8 @@ describe("Test Conditions", () => {
           Bool: {
             "aws:SecureTransport": "true",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -602,8 +605,8 @@ describe("Test Conditions", () => {
           Bool: {
             "aws:SecureTransport": "true",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -615,8 +618,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
-        { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -626,8 +629,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2021-01-01T00:00:01Z",
         },
-        { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -637,8 +640,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2019-01-01T00:00:01Z",
         },
-        { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -648,8 +651,10 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
-        { DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        {
+          DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" },
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -659,8 +664,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
-        { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -674,8 +679,8 @@ describe("Test Conditions", () => {
           DateGreaterThanEquals: {
             "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -687,8 +692,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
-        { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -698,8 +703,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
-        { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateNotEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -709,8 +714,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-02T00:00:01Z",
         },
-        { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateLessThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -720,8 +725,10 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
         },
-        { DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        {
+          DateLessThanEquals: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" },
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -731,8 +738,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:00Z",
         },
-        { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } }
-      )
+        { DateGreaterThan: { "aws:TokenIssueTime": "2020-01-01T00:00:01Z" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -746,8 +753,8 @@ describe("Test Conditions", () => {
           DateGreaterThanEquals: {
             "aws:TokenIssueTime": "2020-01-01T00:00:02Z",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -759,8 +766,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:SourceIp": "203.0.113.2",
         },
-        { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } }
-      )
+        { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -774,8 +781,8 @@ describe("Test Conditions", () => {
           IpAddress: {
             "aws:SourceIp": ["203.0.113.12", "203.0.113.13", "203.0.113.14"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -789,8 +796,8 @@ describe("Test Conditions", () => {
           IpAddress: {
             "aws:SourceIp": "203.0.113.13",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -804,8 +811,8 @@ describe("Test Conditions", () => {
           IpAddress: {
             "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -819,8 +826,8 @@ describe("Test Conditions", () => {
           NotIpAddress: {
             "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -832,8 +839,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:SourceIp": "172.0.113.2",
         },
-        { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } }
-      )
+        { IpAddress: { "aws:SourceIp": "203.0.113.0/24" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -847,8 +854,8 @@ describe("Test Conditions", () => {
           IpAddress: {
             "aws:SourceIp": ["203.0.113.12", "203.0.113.13", "203.0.113.14"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -862,8 +869,8 @@ describe("Test Conditions", () => {
           IpAddress: {
             "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -877,8 +884,8 @@ describe("Test Conditions", () => {
           NotIpAddress: {
             "aws:SourceIp": ["203.0.113.0/24", "2001:DB8:1234:5678::/64"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
   });
 
@@ -890,8 +897,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:SourceIp": "203.0.113.2",
         },
-        { IpAddressIfExists: { "aws:SourceIp": "203.0.113.0/24" } }
-      )
+        { IpAddressIfExists: { "aws:SourceIp": "203.0.113.0/24" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -901,8 +908,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:SourceIp": "203.0.113.2",
         },
-        { IpAddressIfExists: { "aws:TargetIp": "203.0.113.0/24" } }
-      )
+        { IpAddressIfExists: { "aws:TargetIp": "203.0.113.0/24" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -912,8 +919,8 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:SourceIp": "203.0.113.2",
         },
-        { IpAddressIfExists: { "aws:SourceIp": "103.0.113.0/24" } }
-      )
+        { IpAddressIfExists: { "aws:SourceIp": "103.0.113.0/24" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -927,8 +934,8 @@ describe("Test Conditions", () => {
           StringNotEqualsIfExists: {
             "aws:PrincipalTag/department": "database",
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -942,8 +949,8 @@ describe("Test Conditions", () => {
           StringNotEqualsIfExists: {
             "aws:PrincipalTag/unit": "developers",
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -954,8 +961,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
-        { Null: { "aws:TokenIssueTime": "true" } }
-      )
+        { Null: { "aws:TokenIssueTime": "true" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -964,8 +971,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:SourceIp": "203.0.113.2",
         },
-        { Null: { "aws:TokenIssueTime": "false" } }
-      )
+        { Null: { "aws:TokenIssueTime": "false" } },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -974,8 +981,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:SourceIp": "203.0.113.2",
         },
-        { Null: { "aws:TokenIssueTime": "true" } }
-      )
+        { Null: { "aws:TokenIssueTime": "true" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -984,8 +991,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:TokenIssueTime": "2020-01-01T00:00:01Z",
         },
-        { Null: { "aws:TokenIssueTime": "false" } }
-      )
+        { Null: { "aws:TokenIssueTime": "false" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -994,8 +1001,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:TokenIssueTime": null,
         },
-        { Null: { "aws:TokenIssueTime": "true" } }
-      )
+        { Null: { "aws:TokenIssueTime": "true" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1004,8 +1011,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:TokenIssueTime": "",
         },
-        { Null: { "aws:TokenIssueTime": "true" } }
-      )
+        { Null: { "aws:TokenIssueTime": "true" } },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1014,8 +1021,8 @@ describe("Test Conditions", () => {
           action: "",
           "aws:TokenIssueTime": "",
         },
-        { Null: { "aws:TokenIssueTime": "false" } }
-      )
+        { Null: { "aws:TokenIssueTime": "false" } },
+      ),
     ).toBeFalsy();
   });
 
@@ -1030,8 +1037,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1044,8 +1051,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1057,8 +1064,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1071,8 +1078,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1085,8 +1092,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringEquals": {
             "aws:TagKeys": ["terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -1099,8 +1106,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringNotEquals": {
             "aws:TagKeys": ["www", "abc"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -1113,8 +1120,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringNotEquals": {
             "aws:TagKeys": ["qqq", "www"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 
@@ -1129,8 +1136,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1143,8 +1150,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1156,8 +1163,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringEquals": {
             "aws:TagKeys": ["poc", "terraform", "test"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1170,8 +1177,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringEquals": {
             "aws:TagKeys": ["aaa", "eee", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1184,8 +1191,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringEquals": {
             "aws:TagKeys": ["aaa", "eee", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -1198,8 +1205,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringNotEquals": {
             "aws:TagKeys": ["qqq", "eee", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1212,8 +1219,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringNotEquals": {
             "aws:TagKeys": ["aaa", "eee", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1226,8 +1233,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringNotEquals": {
             "aws:TagKeys": ["aaa", "bbb", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -1240,8 +1247,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringNotEquals": {
             "aws:TagKeys": ["aaa", "bbb", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeFalsy();
 
     expect(
@@ -1254,8 +1261,8 @@ describe("Test Conditions", () => {
           "ForAnyValue:StringNotEquals": {
             "aws:TagKeys": ["aaa", "bbb", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
 
     expect(
@@ -1268,8 +1275,8 @@ describe("Test Conditions", () => {
           "ForAllValues:StringNotEquals": {
             "aws:TagKeys": ["aaa", "bbb", "ddd"],
           },
-        }
-      )
+        },
+      ),
     ).toBeTruthy();
   });
 });

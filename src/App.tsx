@@ -1,66 +1,101 @@
-import initialPolicy from "./assets/policy.json";
-import cases from "./assets/cases.json";
+import exercise from "./assets/1.json";
 
 import { useEffect, useState } from "react";
 import { IAMPolicyEngine } from "./engine";
-import { Policy } from "./engine/types";
+import { Policy, PolicyType } from "./engine/types";
 import Editor from "./components/editor";
+import { Exercise, TestCase as TC } from "./types";
+import { getTestCases } from "./utils/prepareTestCases";
+import { Accordion } from "./components/ui/accordion";
+import TestCase from "@/components/test-case";
+import Status from "./components/status";
+import { Button } from "./components/ui/button";
 
 function App() {
   const [policyData, setPolicyData] = useState(
-    JSON.stringify(initialPolicy, null, 2),
+    JSON.stringify(exercise.initialTemplate, null, 2),
   );
   const [error, setError] = useState<string>("");
-  const [results, setResults] = useState<boolean[]>([]);
+  const [allow, setAllow] = useState<boolean[]>([]);
+  const [stats, setStats] = useState({ failed: 0, passed: 0 });
+  const [cases, setCases] = useState<TC[]>([]);
+
+  useEffect(() => {
+    const testCases = getTestCases(exercise as Exercise);
+    setCases(testCases);
+    setStats({
+      failed: testCases.length,
+      passed: 0,
+    });
+  }, [exercise]);
 
   useEffect(() => {
     try {
       const policyObject: Policy = JSON.parse(policyData);
-      const policy = new IAMPolicyEngine(policyObject);
-      setResults(cases.map((item) => policy.evaluate(item.requestContext)));
+      const policy = new IAMPolicyEngine(
+        policyObject,
+        exercise.policyType as PolicyType,
+      );
+      const results = cases.map((item) => policy.evaluate(item.context));
+      const outcome = cases.map((item, index) => item.allow === results[index]);
+      const failed = outcome.filter((item) => !item).length;
+      const passed = outcome.filter((item) => item).length;
+      setAllow(results);
+      setStats({
+        failed,
+        passed,
+      });
       setError("");
     } catch (e) {
       setError(e.message);
+      setAllow([]);
+      setStats({
+        failed: cases.length,
+        passed: 0,
+      });
     }
   }, [policyData]);
 
   return (
     <div className="container m-4 mx-auto w-full">
+      <div>
+        <h1 className="mb-2 text-2xl">{exercise.name}</h1>
+      </div>
       <div className="grid grid-cols-2 gap-6">
         <div className="w-full">
-          <div className="relative max-h-[400px]">
+          <div className="rounded border border-solid border-zinc-200">
             <Editor value={policyData} onChange={setPolicyData} />
           </div>
 
           {error.length > 0 && (
-            <pre className="mt-2 text-wrap break-words bg-red-100 p-2 text-sm">
+            <pre className="mt-2 text-wrap break-words rounded bg-red-100 p-2 text-sm">
               {error}
             </pre>
           )}
+
+          <p className="my-2">{exercise.description}</p>
         </div>
 
         <div className="w-full">
-          {cases.map((item, index) => {
-            return (
-              <div
-                className="mb-2 block rounded-lg border border-gray-200 bg-white p-6 shadow hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                key={index}
-              >
-                {(results[index] && (
-                  <span className="me-3 flex h-3 w-3 rounded-full bg-green-500"></span>
-                )) || (
-                  <span className="me-3 flex h-3 w-3 rounded-full bg-red-500"></span>
-                )}
-                <ul>
-                  {Object.keys(item.requestContext).map((element) => (
-                    <li key={element}>
-                      {element}: {item.requestContext[element]}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+          <Status passed={stats.passed} failed={stats.failed}>
+            <Button>Next</Button>
+          </Status>
+
+          <div className="mb-10"></div>
+
+          <div className="max-h-[calc(100vh-14rem)] overflow-auto">
+            <Accordion type="single" collapsible className="w-full">
+              {cases.map((item, index) => {
+                return (
+                  <TestCase
+                    testCase={item}
+                    key={index}
+                    allowed={allow[index]}
+                  />
+                );
+              })}
+            </Accordion>
+          </div>
         </div>
       </div>
     </div>

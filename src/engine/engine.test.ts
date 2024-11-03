@@ -4,7 +4,10 @@ import { IAMPolicyEngine } from "./index";
 import { PolicyType } from "./values";
 
 describe("Test wildcard functionality", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
+  const engine = new IAMPolicyEngine({
+    Version: "2012-10-17",
+    Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
+  });
 
   test("Action match single wildcard", () => {
     expect(engine.wildcardMatch("iam:Get*", "iam:GetAccessKeyId")).toBeTruthy();
@@ -41,7 +44,10 @@ describe("Test wildcard functionality", () => {
 });
 
 describe("Test Resources", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
+  const engine = new IAMPolicyEngine({
+    Version: "2012-10-17",
+    Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
+  });
 
   test("Resource match global wildcard", () => {
     expect(
@@ -141,7 +147,10 @@ describe("Test Resources", () => {
 });
 
 describe("Test Actions", () => {
-  const engine = new IAMPolicyEngine({ Version: "2012-10-17", Statement: [] });
+  const engine = new IAMPolicyEngine({
+    Version: "2012-10-17",
+    Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
+  });
 
   test("Action match global wildcard", () => {
     expect(engine.actionMatches("sqs:SendMessage", "*")).toBeTruthy();
@@ -178,6 +187,32 @@ describe("Test Actions", () => {
       engine.actionMatches("iam:DeleteAccessKey", ["s3:*", "iam:*", "sqs:*"]),
     ).toBeTruthy();
   });
+
+  test("Action with invalid service", () => {
+    expect(() => {
+      engine.actionMatches("iam:DeleteAccessKey", ["s*:", "iam:*", "sqs:*"]);
+    }).toThrowError(
+      /^Invalid Service In Action: The service s\* specified in the action does not exist$/,
+    );
+
+    expect(() => {
+      engine.actionMatches("iam:DeleteAccessKey", [
+        "ec*:Get*",
+        "iam:*",
+        "sqs:*",
+      ]);
+    }).toThrowError(
+      /^Invalid Service In Action: The service ec\* specified in the action does not exist$/,
+    );
+
+    expect(() => {
+      engine.actionMatches("iam:DeleteAccessKey", ["S3", "iam:*", "sqs:*"]);
+    }).toThrowError(/^Invalid Action: The action S3 does not exist.$/);
+
+    expect(() => {
+      engine.actionMatches("iam:DeleteAccessKey", ["S3:", "iam:*", "sqs:*"]);
+    }).toThrowError(/^Invalid Action: The action S3: does not exist.$/);
+  });
 });
 
 describe("Test Validation", () => {
@@ -200,7 +235,7 @@ describe("Test Validation", () => {
     expect(() => {
       new IAMPolicyEngine({
         version: "2012-10-17",
-        Statement: [],
+        Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
       });
     }).toThrowError(/^Invalid policy format: 'Version' element is missing$/);
 
@@ -214,7 +249,7 @@ describe("Test Validation", () => {
     expect(() => {
       new IAMPolicyEngine({
         Version: "2012-10-25",
-        Statement: [],
+        Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
       });
     }).toThrowError(
       /^Incorrect policy version. Allowed: 2012-10-17, 2008-10-17$/,

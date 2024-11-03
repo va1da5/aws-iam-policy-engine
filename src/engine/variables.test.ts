@@ -6,7 +6,7 @@ describe("Test policy variables functionality", () => {
   test("Extract variables", () => {
     const policy = new IAMPolicyEngine({
       Version: "2012-10-17",
-      Statement: [],
+      Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
     });
 
     const testString =
@@ -39,7 +39,7 @@ describe("Test policy variables functionality", () => {
         action: "",
         "aws:username": "admin",
         "aws:PrincipalTag/team": "developers",
-      })
+      }),
     ).toMatchObject([
       {
         Effect: "Allow",

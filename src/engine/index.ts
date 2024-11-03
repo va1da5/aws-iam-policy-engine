@@ -48,6 +48,9 @@ export class IAMPolicyEngine {
         `Incorrect policy version. Allowed: ${validPolicyVersions.join(", ")}`,
       );
 
+    if (!this.policy.Statement.length)
+      throw new Error("Policy must have at least one statement");
+
     this.policy.Statement.forEach((statement, index) => {
       const errorMsg = `Invalid statement ${index} format`;
 
@@ -59,6 +62,18 @@ export class IAMPolicyEngine {
             `${errorMsg}: Unsupported statement element '${element}'`,
           );
       });
+
+      if (!statementElements.includes("Effect"))
+        throw new Error(`${errorMsg}: Effect element is required`);
+
+      if (
+        !["Action", "NotAction"].filter((element) =>
+          statementElements.includes(element),
+        ).length
+      )
+        throw new Error(
+          "Missing Action: Add an Action or NotAction element to the policy statement",
+        );
 
       switch (this.type) {
         case PolicyType.Identity: {
@@ -111,9 +126,6 @@ export class IAMPolicyEngine {
             `${errorMsg}: ${elements.join(" and ")} are mutually exclusive`,
           );
       });
-
-      if (!statementElements.includes("Effect"))
-        throw new Error(`${errorMsg}: Effect element is required`);
 
       if (!validEffectValues.includes(statement.Effect))
         throw new Error(
@@ -276,12 +288,28 @@ export class IAMPolicyEngine {
     return matches;
   }
 
-  actionMatches(action: string, actions: Action) {
-    if (isString(actions)) return this.wildcardMatch(actions, action);
+  actionMatches(contextAction: string, actions: Action): boolean {
+    if (isArray(actions))
+      return actions.some((action) => {
+        return this.actionMatches(contextAction, action);
+      });
 
-    return actions.some((pattern) => {
-      return this.wildcardMatch(pattern, action);
-    });
+    if (actions === "*") return true;
+
+    if (!actions.includes(":"))
+      throw new Error(`Invalid Action: The action ${actions} does not exist.`);
+
+    const [service, action] = actions.split(":");
+
+    if (service.includes("*"))
+      throw new Error(
+        `Invalid Service In Action: The service ${service} specified in the action does not exist`,
+      );
+
+    if (!action.length)
+      throw new Error(`Invalid Action: The action ${actions} does not exist.`);
+
+    return this.wildcardMatch(actions, contextAction);
   }
 
   resourceMatches(resource: string, resources: Resource) {
