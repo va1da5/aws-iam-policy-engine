@@ -5,7 +5,7 @@ import {
   isObject,
   isString,
   parseBool,
-} from "@/utils/genetic";
+} from "./utils";
 import {
   Action,
   Condition,
@@ -26,6 +26,7 @@ import {
   validPolicyVersions,
   validStatementElements,
 } from "./values";
+import { getErrorMessage } from "./utils";
 
 export class IAMPolicyEngine {
   policy: Policy;
@@ -149,9 +150,9 @@ export class IAMPolicyEngine {
         try {
           if (isString(value)) return this.validateArn(value);
           if (isArray(value)) return value.forEach(this.validateArn);
-        } catch (e) {
+        } catch (error) {
           throw new Error(
-            `${errorMsg}: incorrect ${element} definition. ${e.message}`,
+            `${errorMsg}: incorrect ${element} definition. ${getErrorMessage(error)}`,
           );
         }
       });
@@ -179,9 +180,7 @@ export class IAMPolicyEngine {
       requestContext,
     );
 
-    let isAllowed = false;
-
-    for (const statement of statements) {
+    const results = statements.map((statement) => {
       const { Effect, ...elements } = statement;
 
       const outcome = Object.keys(elements).map((element) => {
@@ -193,7 +192,7 @@ export class IAMPolicyEngine {
           case "Action": {
             return this.actionMatches(
               requestContext["action"],
-              statement[element],
+              statement[element] as Action,
             );
           }
           case "NotAction": {
@@ -247,14 +246,25 @@ export class IAMPolicyEngine {
 
       if (outcome.every((match) => match) && Effect == "Deny") return false;
 
-      if (outcome.every((match) => match) && Effect == "Allow")
-        isAllowed = true;
-    }
+      if (outcome.every((match) => match) && Effect == "Allow") return true;
 
-    return isAllowed;
+      return;
+    });
+
+    // explicit deny
+    if (results.includes(false)) return false;
+
+    // allow
+    if (results.includes(true)) return true;
+
+    // implicit deny
+    return;
   }
 
-  applyVariables(statements: Statement[], context: RequestContext) {
+  applyVariables(
+    statements: Statement[],
+    context: RequestContext,
+  ): Statement[] {
     let json = JSON.stringify(statements);
 
     if (!json.includes("${")) return statements;

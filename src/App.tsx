@@ -10,11 +10,12 @@ import { Accordion } from "./components/ui/accordion";
 import TestCase from "@/components/test-case";
 import Status from "./components/status";
 import { Button } from "./components/ui/button";
+import { getErrorMessage } from "./engine/utils";
 
 function App() {
   const [policyData, setPolicyData] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [allow, setAllow] = useState<boolean[]>([]);
+  const [allow, setAllow] = useState<(boolean | undefined)[]>([]);
   const [stats, setStats] = useState({ failed: 0, passed: 0 });
   const [cases, setCases] = useState<TC[]>([]);
 
@@ -48,8 +49,8 @@ function App() {
         passed,
       });
       setError("");
-    } catch (e) {
-      setError(e.message);
+    } catch (error) {
+      setError(getErrorMessage(error));
       setAllow([]);
       setStats({
         failed: cases.length,
@@ -68,7 +69,7 @@ function App() {
           <div className="rounded border border-solid border-zinc-200">
             <Editor
               value={policyData as string}
-              onChange={policyData.length > 0 ? setPolicyData : (v) => {}}
+              onChange={policyData.length > 0 ? setPolicyData : () => {}}
             />
           </div>
 

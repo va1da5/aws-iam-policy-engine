@@ -13,19 +13,22 @@
         ]
     },
     "solution": {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": "s3:*",
-                "Resource": "*"
-            },
-            {
-                "Effect": "Deny",
-                "Action": "s3:DeleteBucket",
-                "Resource": "*"
-            }
-        ]
+        "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "*"
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": "s3:DeleteBucket",
+                    "Resource": "*"
+                }
+            ]
+        },
+        "description": ""
     },
     "testCases": [
         {

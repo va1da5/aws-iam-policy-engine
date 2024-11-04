@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 
 type Props = {
   testCase: TC;
-  allowed: boolean;
+  allowed: boolean | undefined;
 };
 
 export default function TestCase({ testCase, allowed }: Props) {

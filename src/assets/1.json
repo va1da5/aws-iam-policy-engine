@@ -4,14 +4,17 @@
     "policyType": "IDENTITY_POLICY",
     "initialTemplate": {},
     "solution": {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": "s3:*",
-                "Resource": "*"
-            }
-        ]
+        "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "*"
+                }
+            ]
+        },
+        "description": "Solution description here"
     },
     "testCases": [
         {

@@ -41,3 +41,8 @@ export function hasValue(variable: unknown) {
 export function intersection<T>(arr1: T[], arr2: T[]) {
   return arr1.filter((value) => arr2.includes(value));
 }
+
+export function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}

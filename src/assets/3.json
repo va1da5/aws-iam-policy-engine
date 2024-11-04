@@ -13,25 +13,28 @@
         ]
     },
     "solution": {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Action": "s3:*",
-                "Resource": "*"
-            },
-            {
-                "Effect": "Deny",
-                "Action": [
-                    "s3:delete*",
-                    "s3:put*"
-                ],
-                "Resource": [
-                    "arn:aws:s3:::company-backups",
-                    "arn:aws:s3:::strategic-plans"
-                ]
-            }
-        ]
+        "policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "*"
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": [
+                        "s3:delete*",
+                        "s3:put*"
+                    ],
+                    "Resource": [
+                        "arn:aws:s3:::company-backups",
+                        "arn:aws:s3:::strategic-plans"
+                    ]
+                }
+            ]
+        },
+        "description": ""
     },
     "testCases": [
         {
