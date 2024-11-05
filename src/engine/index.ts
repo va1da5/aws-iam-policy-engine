@@ -17,6 +17,9 @@ import {
 } from "./types";
 import ipRangeCheck from "ip-range-check";
 import {
+  awsAccountIdRegex,
+  awsIdentityIdRegex,
+  awsRootAccountRegex,
   ConditionSetOperator,
   mutuallyExclusiveElements,
   PolicyType,
@@ -322,26 +325,29 @@ export class IAMPolicyEngine {
     return this.wildcardMatch(actions, contextAction);
   }
 
-  resourceMatches(resource: string, resources: Resource) {
+  resourceMatches(resource: string, resources: Resource): boolean {
+    if (isArray(resources))
+      return resources.some((r) => {
+        return this.resourceMatches(resource, r);
+      });
+
     if (isString(resources)) {
       if (!resources.length) return false;
       if (resources == "*") return true;
       return this.arnMatch(resources, resource);
     }
 
-    return resources.some((r) => {
-      if (!r.length) return false;
-      if (r == "*") return true;
-      return this.arnMatch(r, resource);
-    });
+    throw new Error("Unsupported resource type");
   }
 
   conditionMatches(context: RequestContext, condition: Condition) {
-    if (!condition) return true;
+    if (!isObject(condition))
+      throw new Error(
+        "Data Type Mismatch: The text does not match the expected JSON data type Object",
+      );
 
     return Object.keys(condition)
       .map((key) => {
-        // capture if key ends with ..IfExists, remove it from key and pass flag indicating it to each handler
         let operator = key;
         let setOperator = ConditionSetOperator.None;
         const isIfExists = key.endsWith("IfExists");
@@ -628,7 +634,11 @@ export class IAMPolicyEngine {
       .map((principalName: string) => {
         switch (principalName) {
           case "AWS": {
-            if (!principal.AWS) return true;
+            if (!isString(principal.AWS) && !isArray(principal.AWS))
+              throw new Error(
+                "Data Type Mismatch: The text does not match the expected JSON data type String or String Array.",
+              );
+
             if (!context.principal || !context.principal[principalName])
               return false;
 
@@ -794,32 +804,43 @@ export class IAMPolicyEngine {
   checkAWSPrincipal(
     allowedPrincipals: string | string[],
     requestPrincipal: string,
-  ) {
-    const check = (allowedPrincipal: string, requestPrincipal: string) => {
-      // AWS account principals: only Account ID set in policy
-      if (!allowedPrincipal.includes(":"))
-        return allowedPrincipal === this.getAccountId(requestPrincipal);
+  ): boolean {
+    if (isArray(allowedPrincipals))
+      return allowedPrincipals
+        .map((principal) => this.checkAWSPrincipal(principal, requestPrincipal))
+        .some((result) => result);
 
+    if (!isString(allowedPrincipals))
+      throw new Error(
+        "Data Type Mismatch: The text does not match the expected JSON data type String or String Array.",
+      );
+
+    const allowedPrincipal = allowedPrincipals as string;
+
+    if (allowedPrincipal.length > 1 && allowedPrincipal.includes("*"))
+      throw new Error(
+        "Unsupported Wildcard In Principal: Wildcards (*, ?) are not supported with the principal key AWS. Replace the wildcard with a valid principal value.",
+      );
+
+    // AWS account principals: only Account ID set in policy
+    if (awsAccountIdRegex.test(allowedPrincipal))
+      return allowedPrincipal === this.getAccountId(requestPrincipal);
+
+    if (awsIdentityIdRegex.test(allowedPrincipal))
+      return allowedPrincipal === requestPrincipal;
+
+    if (awsRootAccountRegex.test(allowedPrincipal))
       // AWS account principals: full ARN
-      if (allowedPrincipal.includes(":") && !allowedPrincipal.includes("/"))
-        return (
-          this.getAccountId(allowedPrincipal) ===
-          this.getAccountId(requestPrincipal)
-        );
+      return (
+        this.getAccountId(allowedPrincipal) ===
+        this.getAccountId(requestPrincipal)
+      );
 
-      // IAM role/user principals
-      if (allowedPrincipal.includes(":") && allowedPrincipal.includes("/"))
-        return allowedPrincipal === requestPrincipal;
-    };
+    // IAM role/user principals
+    if (allowedPrincipal.includes(":") && allowedPrincipal.includes("/"))
+      return allowedPrincipal === requestPrincipal;
 
-    // Single entry defined
-    if (isString(allowedPrincipals))
-      return check(allowedPrincipals, requestPrincipal);
-
-    // Multiple Principals defined
-    return allowedPrincipals
-      .map((principal) => check(principal, requestPrincipal))
-      .some((result) => result);
+    throw new Error(`Unsupported Principal: ${allowedPrincipal}`);
   }
 
   arnWildcards(arn: string) {

@@ -36,3 +36,7 @@ export const mutuallyExclusiveElements = [
 ];
 
 export const validPartitions = ["*", "aws", "aws-cn", "aws-us-gov"];
+
+export const awsAccountIdRegex = /^\d{12}$/;
+export const awsRootAccountRegex = /^arn:.*?:\d{12}:root$/;
+export const awsIdentityIdRegex = /^[\w]{16,128}$/;

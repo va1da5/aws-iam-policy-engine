@@ -106,6 +106,68 @@ describe("Test policy principal functionality", () => {
     ).toBeTruthy();
   });
 
+  test("Wildcard in principal definition", () => {
+    const policy = new IAMPolicyEngine(
+      {
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Sid: "Enable IAM User Permissions",
+            Effect: "Allow",
+            Principal: {
+              AWS: "rn:aws:iam::123456789012:user/*",
+            },
+            Action: "kms:*",
+            Resource: "*",
+          },
+        ],
+      },
+      PolicyType.Resource,
+    );
+
+    expect(() => {
+      policy.evaluate({
+        action: "kms:DescribeKey",
+        resource:
+          "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
+        principal: { AWS: "arn:aws:iam::123456789012:user/alice" },
+      });
+    }).toThrowError(
+      "Unsupported Wildcard In Principal: Wildcards (*, ?) are not supported with the principal key AWS. Replace the wildcard with a valid principal value.",
+    );
+  });
+
+  test("Incorrect data type", () => {
+    const policy = new IAMPolicyEngine(
+      {
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Sid: "Enable IAM User Permissions",
+            Effect: "Allow",
+            Principal: {
+              AWS: null,
+            },
+            Action: "kms:*",
+            Resource: "*",
+          },
+        ],
+      },
+      PolicyType.Resource,
+    );
+
+    expect(() => {
+      policy.evaluate({
+        action: "kms:DescribeKey",
+        resource:
+          "arn:aws:kms:us-east-1:111122223333:key/181e8f25-b5ad-4c02-ac2d-fcbbd2d22f1b",
+        principal: { AWS: "arn:aws:iam::123456789012:user/alice" },
+      });
+    }).toThrowError(
+      "Data Type Mismatch: The text does not match the expected JSON data type String or String Array.",
+    );
+  });
+
   test("Simple AWS KMS policy", () => {
     const policy = new IAMPolicyEngine(
       {

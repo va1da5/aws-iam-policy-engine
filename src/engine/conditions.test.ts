@@ -8,6 +8,21 @@ describe("Test Conditions", () => {
     Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
   });
 
+  test("Condition of type boolean", () => {
+    expect(() => {
+      engine.conditionMatches(
+        {
+          action: "",
+          resource: "",
+          "aws:PrincipalTag/job-category": "iamuser-admin",
+        },
+        true,
+      );
+    }).toThrowError(
+      "Data Type Mismatch: The text does not match the expected JSON data type Object",
+    );
+  });
+
   test("Condition StringEquals matches", () => {
     expect(
       engine.conditionMatches(
