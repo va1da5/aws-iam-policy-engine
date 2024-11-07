@@ -5,7 +5,7 @@ export default function NavBar({}: Props) {
     <nav className="border-gray-200 bg-white dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between py-4">
         <div className="flex items-center space-x-3 rtl:space-x-reverse">
-          <img src="imgs/IAM_32.svg" className="h-8 rounded" alt="iam" />
+          <img src="iam.svg" className="h-9 rounded" alt="iam" />
           <span className="self-center whitespace-nowrap text-2xl font-semibold dark:text-white">
             AWS IAM Policy Training
           </span>
