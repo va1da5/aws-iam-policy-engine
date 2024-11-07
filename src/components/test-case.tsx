@@ -8,20 +8,33 @@ import { Badge } from "@/components/ui/badge";
 
 type Props = {
   testCase: TC;
-  allowed: boolean | undefined;
+  outcome: boolean | undefined;
 };
 
-export default function TestCase({ testCase, allowed }: Props) {
+const getActualAction = (action: boolean | undefined) => {
+  switch (action) {
+    case true:
+      return "Allowed";
+    case false:
+      return "Explicitly Denied";
+    default:
+      return "Implicitly Denied";
+  }
+};
+
+export default function TestCase({ testCase, outcome }: Props) {
   const { action } = testCase.context;
 
-  const passed = allowed === testCase.allow;
+  const testPassed = outcome
+    ? outcome === testCase.allow
+    : [false, undefined].includes(testCase.allow);
 
   return (
     <AccordionItem value={`${JSON.stringify(testCase.context)}`}>
       <AccordionTrigger>
         <span className="flex gap-2">
-          <Badge variant={passed ? "success" : "failure"}>
-            {passed ? "Passed" : "Failed"}
+          <Badge variant={testPassed ? "success" : "failure"}>
+            {testPassed ? "Passed" : "Failed"}
           </Badge>
           <span>{action}</span>
         </span>
@@ -31,7 +44,7 @@ export default function TestCase({ testCase, allowed }: Props) {
           <strong>Expected:</strong> {testCase.allow ? "Allowed" : "Denied"}
         </p>
         <p>
-          <strong>Actual:</strong> {allowed ? "Allowed" : "Denied"}
+          <strong>Actual:</strong> {getActualAction(outcome)}
         </p>
         <p>
           <strong>Context:</strong>

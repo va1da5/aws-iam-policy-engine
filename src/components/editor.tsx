@@ -9,8 +9,12 @@ type Props = {
   debounce?: number;
 };
 
-export default function Editor({ value, onChange, debounce = 2000 }: Props) {
+export default function Editor({ value, onChange, debounce = 1000 }: Props) {
   const [state, setState] = useState(value);
+
+  useEffect(() => {
+    setState(value);
+  }, [value]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -18,7 +22,7 @@ export default function Editor({ value, onChange, debounce = 2000 }: Props) {
     }, debounce);
 
     return () => clearTimeout(timeout);
-  }, [state]);
+  }, [state, debounce, onChange, value]);
 
   return (
     <CodeMirror
