@@ -3,6 +3,7 @@
     "description": "Create an IAM identity policy that provides full access only to the AWS S3 service.",
     "policyType": "IDENTITY_POLICY",
     "initialTemplate": {},
+    "hints": [],
     "solution": {
         "policy": {
             "Version": "2012-10-17",

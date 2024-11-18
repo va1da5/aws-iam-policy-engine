@@ -12,6 +12,7 @@
             }
         ]
     },
+    "hints": [],
     "solution": {
         "policy": {
             "Version": "2012-10-17",
