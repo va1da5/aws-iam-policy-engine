@@ -4,16 +4,15 @@ import { Policy, PolicyType } from "@/engine/types";
 import Editor from "@/components/editor";
 import { Exercise, TestCase as TC } from "@/types";
 import { getTestCases } from "@/utils/prepareTestCases";
-import { Accordion } from "@/components/ui/accordion";
-import TestCase from "@/components/test-case";
 import Status from "@/components/status";
 import { Button } from "@/components/ui/button";
-import { getErrorMessage } from "@/engine/utils";
+import { getErrorMessage, getPolicyType } from "@/engine/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { CollapsibleTrigger } from "@radix-ui/react-collapsible";
-import { ChevronDown } from "lucide-react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import Hints from "@/components/hints";
+import TestCases from "@/components/test-cases";
+import Markdown from "@/components/markdown";
+import Solution from "@/components/solution";
 
 export const Route = createFileRoute("/challenge/$policyId")({
   component: Challenge,
@@ -22,12 +21,11 @@ export const Route = createFileRoute("/challenge/$policyId")({
 function Challenge() {
   const { policyId } = Route.useParams();
   const navigate = useNavigate();
-  const [policyData, setPolicyData] = useState<string>("");
+  const [currentPolicy, setCurrentPolicy] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [allow, setAllow] = useState<(boolean | undefined)[]>([]);
-  const [stats, setStats] = useState({ failed: 0, passed: 0 });
+  const [results, setResults] = useState<(boolean | undefined)[]>([]);
+  const [status, setStatus] = useState({ failed: 0, passed: 0 });
   const [cases, setCases] = useState<TC[]>([]);
-  // const [policy, setPolicy] = useState(id as number);
 
   const {
     isPending,
@@ -43,24 +41,30 @@ function Challenge() {
   });
 
   useEffect(() => {
-    if (isPending) return;
+    setStatus({
+      failed: 1,
+      passed: 0,
+    });
+    setCurrentPolicy("");
+  }, [policyId]);
+
+  useEffect(() => {
+    if (isPending || isFetching) return;
 
     const testCases = getTestCases(exercise as Exercise);
     setCases(testCases);
-    setStats({
+    setStatus({
       failed: testCases.length,
       passed: 0,
     });
-
-    setPolicyData(JSON.stringify(exercise.initialTemplate, null, 2));
-  }, [exercise, isPending]);
+  }, [exercise, isPending, isFetching]);
 
   useEffect(() => {
-    if (isPending) return;
-    if (!policyData.length) return;
+    if (isPending || isFetching) return;
+    if (!currentPolicy.length) return;
 
     try {
-      const policyObject: Policy = JSON.parse(policyData as string);
+      const policyObject: Policy = JSON.parse(currentPolicy as string);
 
       const policy = new IAMPolicyEngine(
         policyObject,
@@ -73,109 +77,93 @@ function Challenge() {
       );
       const failed = outcome.filter((item) => !item).length;
       const passed = outcome.filter((item) => item).length;
-      setAllow(results);
-      setStats({
+      setResults(results);
+      setStatus({
         failed,
         passed,
       });
       setError("");
     } catch (error) {
       setError(getErrorMessage(error));
-      setAllow([]);
-      setStats({
+      setResults([]);
+      setStatus({
         failed: cases.length,
         passed: 0,
       });
     }
-  }, [policyData]);
+  }, [currentPolicy, exercise, isPending, isFetching]);
 
-  if (isPending) return "";
+  if (isPending || isFetching) return "Loading...";
 
   return (
     <div>
-      <div>
-        <h1 className="mb-2 text-xl">{exercise.name}</h1>
+      <div className="mb-2 grid grid-cols-2 gap-6">
+        <div className="flex items-end justify-between">
+          <h1 className="text-xl">
+            Level {policyId}. {exercise.name}
+          </h1>
+          <h2 className="font-medium">{getPolicyType(exercise.policyType)}</h2>
+        </div>
       </div>
+
       <div className="grid grid-cols-2 gap-6">
         <div className="w-full">
-          <div className="relative rounded border border-solid border-zinc-200">
+          <div className="group relative rounded border border-solid border-zinc-200">
             <Editor
-              value={policyData as string}
-              onChange={
-                policyData.length > 0 && !isPending ? setPolicyData : () => {}
-              }
+              value={JSON.stringify(exercise.initialTemplate, null, 2)}
+              onChange={setCurrentPolicy}
             />
             {error.length > 0 && (
-              <pre className="absolute bottom-0 mt-2 w-full text-wrap break-words rounded bg-red-100 p-2 text-sm">
+              <pre className="absolute bottom-0 mt-2 w-full text-wrap break-words rounded bg-red-100 p-2 text-sm opacity-100 transition-opacity duration-300 ease-in-out group-hover:pointer-events-none group-hover:opacity-80">
                 {error}
               </pre>
             )}
           </div>
 
-          <p className="my-2">{exercise.description}</p>
+          <div className="mt-5">
+            <p className="text-lg font-medium">Description</p>
+            <div className="prose prose-slate w-full dark:prose-invert">
+              <Markdown>{exercise.description}</Markdown>
+            </div>
+          </div>
         </div>
 
         <div className="w-full">
-          <Status passed={stats.passed} failed={stats.failed}>
+          <Status status={status}>
             <div className="flex gap-2">
-              <Button>Solve</Button>
-              <Button
-                onClick={() =>
-                  navigate({
-                    from: `/challenge/${policyId}`,
-                    to: Route.to,
-                    replace: true,
-                    params: {
-                      policyId: String(parseInt(policyId) + 1),
-                    },
-                  })
-                }
-              >
-                Next
-              </Button>
+              {!isPending && (
+                <Solution solution={exercise.solution.description}>
+                  <div className="mt-5 flex w-full justify-center">
+                    <Button
+                      onClick={() =>
+                        navigate({
+                          from: `/challenge/${policyId}`,
+                          to: Route.to,
+                          replace: true,
+                          params: {
+                            policyId: String(parseInt(policyId) + 1),
+                          },
+                        })
+                      }
+                    >
+                      Next Challenge
+                    </Button>
+                  </div>
+                </Solution>
+              )}
             </div>
           </Status>
 
-          <div className="mb-10"></div>
+          <div className="mb-5"></div>
 
-          <div className="w-full rounded border p-4">
-            <Collapsible>
-              <CollapsibleTrigger className="w-full">
-                <span className="mb-1 flex w-full justify-between">
-                  <div>
-                    <p className="text-left font-medium">Evaluation Requests</p>
-                    <p className="text-left text-sm text-muted-foreground">
-                      Click to expand the list of simulated request contexts
-                      that are used for the created IAM policy. Each entry comes
-                      with variables that might be needed for policy execution.
-                      It does not include all of the context values available in
-                      AWS requests; it only provides those that might be needed
-                      to complete the policy writing exercise.
-                    </p>
-                  </div>
-                  <div>
-                    <ChevronDown />
-                  </div>
-                </span>
-              </CollapsibleTrigger>
+          {exercise.hints.length > 0 && (
+            <div>
+              <Hints values={exercise.hints} />
+              <div className="mb-5"></div>
+            </div>
+          )}
 
-              <CollapsibleContent>
-                <div className="max-h-[calc(100vh-30rem)] overflow-auto">
-                  <Accordion type="single" collapsible className="w-full">
-                    {cases.map((item, index) => {
-                      return (
-                        <TestCase
-                          testCase={item}
-                          key={index}
-                          outcome={allow[index]}
-                        />
-                      );
-                    })}
-                  </Accordion>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          <TestCases cases={cases} results={results} />
         </div>
       </div>
     </div>

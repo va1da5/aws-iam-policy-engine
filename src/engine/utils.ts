@@ -1,3 +1,6 @@
+import { PolicyType } from "./types";
+import { policyTypeMap } from "./values";
+
 export function isString(variable: unknown) {
   return typeof variable === "string";
 }
@@ -47,4 +50,6 @@ export function getErrorMessage(error: unknown) {
   return String(error);
 }
 
-export function or<T>(func: (item: T) => boolean, items: T[]) {}
+export function getPolicyType(policyType: PolicyType): string {
+  return policyTypeMap[policyType];
+}

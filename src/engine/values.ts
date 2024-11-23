@@ -11,6 +11,13 @@ export enum PolicyType {
   ServiceControl = "SERVICE_CONTROL_POLICY",
 }
 
+export const policyTypeMap: Record<PolicyType, string> = {
+  [PolicyType.Identity]: "Identity Policy",
+  [PolicyType.Resource]: "Resource-based Policy",
+  [PolicyType.Trust]: "Trust Policy",
+  [PolicyType.ServiceControl]: "Service Control Policy",
+};
+
 export const validPolicyVersions = ["2012-10-17", "2008-10-17"];
 
 export const requiredPolicyElements = ["Version", "Statement"];

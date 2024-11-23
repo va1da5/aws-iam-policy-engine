@@ -1,9 +1,11 @@
 {
     "name": "Full Access to AWS S3 Service",
-    "description": "Create an IAM identity policy that provides full access only to the AWS S3 service.",
+    "description": "Create an **IAM identity policy** for a role that provides full access **only** to the AWS S3 service.",
     "policyType": "IDENTITY_POLICY",
     "initialTemplate": {},
-    "hints": [],
+    "hints": [
+        "Have a look into the [JSON policy document structure](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#policies-introduction)."
+    ],
     "solution": {
         "policy": {
             "Version": "2012-10-17",
@@ -15,7 +17,7 @@
                 }
             ]
         },
-        "description": "Solution description here"
+        "description": "Congratulations! You managed to pass the first challenge. Your created policy should look similar to the below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": \"*\"\n    }\n  ]\n}\n```\n\nThis policy only allows access to AWS S3 service and nothing else."
     },
     "testCases": [
         {
