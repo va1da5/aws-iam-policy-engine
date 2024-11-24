@@ -1,0 +1,39 @@
+---
+name: Name
+description: Description
+policyType: IDENTITY_POLICY | RESOURCE_POLICY | TRUST_POLICY | SERVICE_CONTROL_POLICY
+initialTemplate:
+  {
+    "Version": "2012-10-17",
+    "Statement": [{ "Effect": "Allow", "Action": "*", "Resource": "*" }],
+  }
+hints:
+  - "[What is IAM?](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html)."
+solution: |
+  Congratulations! Your created policy should look similar to the below:
+
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "*"
+        }
+    ]
+  }
+  ```
+
+testCases:
+  - context:
+      action: "s3:GetObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+    allow: true
+
+  - context:
+      action: kms:Decrypt
+      resource: arn:aws:kms:us-east-1:123456789012:key/e7137a59-6058-4f0b-87ab-3bccc80bf948
+    allow: false
+
+values: {}

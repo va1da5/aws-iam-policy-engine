@@ -49,7 +49,7 @@ export default function TestCase({ testCase, outcome }: Props) {
         <p>
           <strong>Context:</strong>
         </p>
-        <pre className="rounded bg-slate-100 p-2 text-sm">
+        <pre className="text-wrap rounded bg-slate-100 p-2 text-sm">
           {JSON.stringify(testCase.context, null, 2)}
         </pre>
       </AccordionContent>

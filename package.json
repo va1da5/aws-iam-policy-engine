@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest --silent=false"
+    "test": "vitest --silent=false",
+    "convert": "for f in challenges/*.yml; do id=$(echo $f | sed -E 's/.*\\/([0-9]+)\\.yml/\\1/'); js-yaml $f > public/policies/$id.json; done"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
@@ -26,6 +27,7 @@
     "clsx": "^2.1.1",
     "install": "^0.13.0",
     "ip-range-check": "^0.2.0",
+    "js-yaml": "^4.1.0",
     "lucide-react": "^0.454.0",
     "npm": "^10.9.0",
     "react": "^18.3.1",

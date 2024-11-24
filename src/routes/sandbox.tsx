@@ -5,5 +5,5 @@ export const Route = createFileRoute("/sandbox")({
 });
 
 function RouteComponent() {
-  return "Hello /sandbox!";
+  return "Under construction..";
 }

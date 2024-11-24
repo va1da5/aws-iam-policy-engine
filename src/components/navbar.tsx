@@ -1,8 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-type Props = {};
-
-export default function NavBar({}: Props) {
+export default function NavBar() {
   return (
     <nav className="border-gray-200 bg-white dark:bg-gray-900">
       <div className="flex flex-wrap items-center justify-between py-4">

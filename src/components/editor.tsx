@@ -39,7 +39,7 @@ export default function Editor({ value, onChange, debounce = 1000 }: Props) {
     <div className="relative">
       <button
         title="Beautify policy"
-        className="absolute right-3 top-3 z-10 text-gray-400 transition-all hover:text-blue-700"
+        className="absolute right-4 top-3 z-10 text-gray-400 transition-all hover:text-blue-700"
         onClick={prettifyJson}
       >
         <Braces />

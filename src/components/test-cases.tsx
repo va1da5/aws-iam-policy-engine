@@ -33,7 +33,7 @@ export default function TestCases({ cases, results }: Props) {
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="max-h-[calc(100vh-30rem)] overflow-auto">
+          <div className="max-h-[calc(100vh-380px)] overflow-auto">
             <p className="text-left text-sm text-muted-foreground">
               Each request context comes with variables that might be needed for
               policy execution. It does not include all of the context values

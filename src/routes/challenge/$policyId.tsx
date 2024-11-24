@@ -73,7 +73,8 @@ function Challenge() {
       const results = cases.map((item) => policy.evaluate(item.context));
       const outcome = cases.map(
         (item, index) =>
-          item.allow === results[index] || results[index] === undefined,
+          item.allow === results[index] ||
+          (item.allow === false && results[index] === undefined),
       );
       const failed = outcome.filter((item) => !item).length;
       const passed = outcome.filter((item) => item).length;
@@ -132,7 +133,7 @@ function Challenge() {
           <Status status={status}>
             <div className="flex gap-2">
               {!isPending && (
-                <Solution solution={exercise.solution.description}>
+                <Solution solution={exercise.solution}>
                   <div className="mt-5 flex w-full justify-center">
                     <Button
                       onClick={() =>

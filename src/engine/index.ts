@@ -680,8 +680,10 @@ export class IAMPolicyEngine {
         if (isIfExists && !context[contextKey]) return true;
 
         if (setOperator == ConditionSetOperator.None) {
-          if (!isString(context[contextKey]))
+          if (!isString(context[contextKey])) {
+            // TODO: this needs to be fixed!!
             throw new Error(`${contextKey} context key must be a single value`);
+          }
 
           if (isString(conditionValue))
             return comparator(conditionValue, context[contextKey] as string);

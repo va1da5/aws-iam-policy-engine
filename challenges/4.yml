@@ -1,0 +1,233 @@
+---
+name: AWS S3 Access To Personal User Directories
+description: Implement a policy that restricts access solely to the user-assigned directory. Any actions that could potentially modify the bucket must be strictly prohibited.
+policyType: IDENTITY_POLICY
+initialTemplate:
+  {
+    "Version": "2012-10-17",
+    "Statement": [{ "Effect": "Allow", "Action": "s3:*", "Resource": "*" }],
+  }
+hints:
+  - Is there a way to make AWS IAM policies more dynamic?
+  - "[IAM policy elements: Variables and tags](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html)"
+solution: |
+  Congratulations! Your created policy should look similar to the below:
+
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": "s3:*",
+        "Resource": [
+          "arn:aws:s3:::acme-user-data/${aws:username}/*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": "s3:ListBucket",
+        "Resource": [
+          "arn:aws:s3:::acme-user-data"
+        ],
+        "Condition": {
+          "StringLike": {
+            "s3:prefix": ["${aws:username}/*"]
+          }
+        }
+      }
+    ]
+  }
+  ```
+
+testCases:
+  - context:
+      action: "s3:GetObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${users}"
+      "s3:prefix": "${users}/${files}"
+    allow: true
+
+  - context:
+      action: "s3:PutObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${users}"
+      "s3:prefix": "${users}/${files}"
+    allow: true
+
+  - context:
+      action: "s3:DeleteObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${users}"
+      "s3:prefix": "${users}/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "brian"
+      "s3:prefix": "brian/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "brian"
+      "s3:prefix": "brian/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "emily"
+      "s3:prefix": "emily/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "jackson"
+      "s3:prefix": "peter/${files}"
+    allow: false
+
+  - context:
+      action: "s3:GetObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${incorrectUsers}"
+      "s3:prefix": "${users}/${files}"
+    allow: false
+
+  - context:
+      action: "s3:PutObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${incorrectUsers}"
+      "s3:prefix": "${users}/${files}"
+    allow: false
+
+  - context:
+      action: "s3:DeleteObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${incorrectUsers}"
+      "s3:prefix": "${users}/${files}"
+    allow: false
+
+  - context:
+      action: "${restrictedBucketActions}"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": brian
+    allow: false
+
+  - context:
+      action: "${restrictedBucketActions}"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": isabella
+    allow: false
+
+  - context:
+      action: "${restrictedBucketActions}"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": olivia
+    allow: false
+
+values:
+  users:
+    - adelina
+    - brian
+    - carol
+    - daniel
+    - emily
+    - felix
+    - george
+    - hannah
+    - isabella
+    - jackson
+    - kate
+    - luke
+    - mary
+    - noah
+    - olivia
+    - peter
+    - quinn
+    - rachel
+    - sam
+    - tom
+    - ursula
+    - victor
+    - william
+    - xavier
+    - yvonne
+    - zoe
+
+  incorrectUsers:
+    - zoe
+    - adelina
+    - brian
+    - carol
+    - daniel
+    - emily
+    - felix
+    - george
+    - hannah
+    - isabella
+    - jackson
+    - kate
+    - luke
+    - mary
+    - noah
+    - olivia
+    - peter
+    - quinn
+    - rachel
+    - sam
+    - tom
+    - ursula
+    - victor
+    - william
+    - xavier
+    - yvonne
+
+  files:
+    - 2020.sql
+    - 2020.tar.bz2
+    - _wpeprivate/config.json
+    - accounts.txt
+    - adfs/services/trust/2005/windowstransport
+    - adm/index.html
+    - admin-serv/config/admpw
+    - admin/.config
+    - all/modules/ogdi_field/plugins/dataTables/extras/TableTools/media/swf/ZeroClipboard.swf
+    - apache/logs/access.log
+    - api/swagger.yml
+    - apiserver-aggregator.cert
+    - app/composer.json
+    - app/config/databases.yml
+    - app/etc/config.xml
+    - apps/frontend/config/app.yml
+    - clients.tar.gz
+    - checked_accounts.txt
+    - archive.tar.gz
+    - article/admin/admin.asp
+    - auditevents.json
+    - autoconfig.json
+    - axis2/axis2-web/HappyAxis.jsp
+    - backup.zip
+    - basic_auth.csv
+    - ChangeLog.md
+
+  restrictedBucketActions:
+    - s3:CreateBucket
+    - s3:DeleteBucket
+    - s3:DeleteBucketPolicy
+    - s3:DeleteBucketWebsite
+    - s3:PutBucketAcl
+    - s3:PutBucketPolicy
+    - s3:PutBucketLogging
+    - s3:PutBucketPublicAccessBlock
+    - s3:PutBucketRequestPayment
+    - s3:PutBucketTagging
+    - s3:PutBucketVersioning
+    - s3:PutBucketWebsite
+    - s3:PutEncryptionConfiguration
+    - s3:PutLifecycleConfiguration
+    - s3:PutReplicationConfiguration
+    - s3:PauseReplication
