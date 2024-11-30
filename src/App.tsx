@@ -46,7 +46,7 @@ function App() {
       passed: 0,
     });
 
-    setPolicyData(JSON.stringify(exercise.initialTemplate, null, 2));
+    setPolicyData(JSON.stringify(exercise.initialPolicy, null, 2));
   }, [exercise, isPending]);
 
   useEffect(() => {

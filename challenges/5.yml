@@ -1,0 +1,318 @@
+---
+name: Restricting EC2 Instance Launches to Small Sizes
+description: |
+  Using an IAM policy, limit the types of EC2 instances that users can launch through the AWS console to only the small ones (nano, micro, and small) of any instance type allowed.
+policyType: IDENTITY_POLICY
+initialPolicy:
+  {
+    "Version": "2012-10-17",
+    "Statement": [{ "Effect": "Allow", "Action": "ec2:*", "Resource": "*" }],
+  }
+hints:
+  - TBD
+solution: |
+  Congratulations! Your created policy should look similar to the below:
+
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "LimitInstanceTypes",
+        "Effect": "Allow",
+        "Action": "ec2:RunInstances",
+        "Resource": "*",
+        "Condition": {
+          "StringLikeIfExists": {
+            "ec2:InstanceType": [
+              "*.nano",
+              "*.micro",
+              "*.small"
+            ]
+          }
+        }
+      },
+      {
+        "Sid": "AllowNeededActions",
+        "Effect": "Allow",
+        "Action": [
+          "ec2:Describe*",
+          "ec2:CreateTags",
+          "ec2:CreateKeyPair"
+        ],
+        "Resource": "*"
+      }
+    ]
+  }
+  ```
+
+  or even simpler approach by just denying specific condition:
+
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "FullEC2Access",
+        "Effect": "Allow",
+        "Action": "ec2:*",
+        "Resource": "*"
+      },
+      {
+        "Sid": "PreventLargerInstances",
+        "Effect": "Deny",
+        "Action": "ec2:RunInstances",
+        "Resource": "arn:aws:ec2:::instance/*",
+        "Condition": {
+          "StringNotLike": {
+            "ec2:InstanceType": [
+              "*.nano",
+              "*.micro",
+              "*.small"
+            ]
+          }
+        }
+      }
+    ]
+  }
+  ```
+
+testCases:
+  - context:
+      action: "ec2:RunInstances"
+      resource: "arn:aws:ec2:us-east-1:123456789012:instance/*"
+      "ec2:InstanceMarketType": on-demand
+      "aws:Resource": instance/*
+      "aws:Account": "123456789012"
+      "ec2:AvailabilityZone": us-east-1a
+      "ec2:InstanceType": "${allowedInstanceTypes}"
+      "ec2:RootDeviceType": ebs
+      "aws:Region": us-east-1
+      "aws:Service": ec2
+      "ec2:InstanceID": "*"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:instance/*"
+    allow: true
+
+  - context:
+      action: "ec2:RunInstances"
+      resource: "arn:aws:ec2:us-east-1:123456789012:instance/*"
+      "ec2:InstanceMarketType": on-demand
+      "aws:Resource": instance/*
+      "aws:Account": "123456789012"
+      "ec2:AvailabilityZone": us-east-1a
+      "ec2:InstanceType": "${forbiddenInstanceTypes}"
+      "ec2:RootDeviceType": ebs
+      "aws:Region": us-east-1
+      "aws:Service": ec2
+      "ec2:InstanceID": "*"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:instance/*"
+    allow: false
+
+  - context:
+      action: "ec2:RunInstances"
+      resource: "arn:aws:ec2:us-east-1:123456789012:network-interface/*"
+      "ec2:Vpc": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-8cc269f1"
+      "ec2:NetworkInterfaceID": "*"
+      "aws:Resource": "network-interface/*"
+      "aws:Account": "123456789012"
+      "ec2:AvailabilityZone": "us-east-1a"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "ec2:AssociatePublicIpAddress": "true"
+      "ec2:Subnet": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-7bb32c1d"
+      "aws:Type": "network-interface"
+      "ec2:Region": "us-east-1"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:network-interface/*"
+    allow: true
+
+  - context:
+      action: "ec2:RunInstances"
+      resource: "arn:aws:ec2:us-east-1:123456789012:security-group/sg-6616496b"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "ec2:Vpc": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-8cc269f1"
+      "aws:Resource": "security-group/sg-6616496b"
+      "aws:Type": "security-group"
+      "aws:Account": "123456789012"
+      "ec2:Region": "us-east-1"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-6616496b"
+      "ec2:SecurityGroupID": "sg-6616496b"
+    allow: true
+
+  - context:
+      action: "ec2:RunInstances"
+      resource: "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-1642da49"
+      "ec2:AvailabilityZoneId": use1-az6
+      "ec2:Vpc": "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-8cc269f1"
+      "aws:Resource": "subnet/subnet-1642da49"
+      "aws:Account": "123456789012"
+      "ec2:AvailabilityZone": "us-east-1d"
+      "ec2:SubnetID": "subnet-1642da49"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "aws:Type": "subnet"
+      "ec2:Region": "us-east-1"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-1642da49"
+    allow: true
+
+  - context:
+      action: "ec2:RunInstances"
+      resource: "arn:aws:ec2:us-east-1:123456789012:volume/*"
+      "aws:Account": "123456789012"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "aws:Type": "volume"
+      "ec2:Region": "us-east-1"
+      "aws:Resource": "volume/*"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:volume/*"
+      "ec2:VolumeThroughput": "125"
+      "ec2:AvailabilityZone": "us-east-1a"
+      "ec2:Encrypted": "false"
+      "ec2:VolumeType": "gp3"
+      "ec2:VolumeID": "*"
+      "ec2:VolumeSize": "8"
+    allow: true
+
+  - context:
+      action: "ec2:CreateKeyPair"
+      resource: "arn:aws:ec2:us-east-1:123456789012:key-pair/mgmt-ssh-key"
+      "aws:Account": "123456789012"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "aws:Type": "key-pair"
+      "ec2:Region": "us-east-1"
+      "aws:Resource": "key-pair/mgmt-ssh-key"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:key-pair/mgmt-ssh-key"
+      "ec2:KeyPairType": "ed25519"
+      "ec2:KeyPairName": "mgmt-ssh-key"
+    allow: true
+
+  - context:
+      action: "ec2:CreateTags"
+      resource: "arn:aws:ec2:us-east-1:123456789012:key-pair/Management"
+      "aws:Account": "123456789012"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "aws:Type": "key-pair"
+      "ec2:Region": "us-east-1"
+      "aws:Resource": "key-pair/Management"
+      "aws:ARN": "arn:aws:ec2:us-east-1:123456789012:key-pair/Management"
+      "aws:ResourceTag/department": "development"
+      "ec2:KeyPairName": "Management"
+      "ec2:KeyPairType": "ed25519"
+      "ec2:KeyPairID": "key-095cf2c239a7dd0d0"
+      "ec2:ResourceTag/department": "development"
+    allow: true
+
+  - context:
+      action: "${genericAllowedActions}"
+      resource: "arn:aws:ec2:us-east-1:123456789012:*"
+      "aws:Account": "123456789012"
+      "aws:Region": "us-east-1"
+      "aws:Service": "ec2"
+      "ec2:Region": "us-east-1"
+    allow: true
+
+  - context:
+      action: ${otherForbiddenActions}
+      resource: arn:aws:${otherForbiddenServices}:us-east-1:123456789012:*
+    allow: false
+
+values:
+  genericAllowedActions:
+    - ec2:DescribeInstances
+    - ec2:DescribeAvailabilityZones
+    - ec2:DescribeInstanceTypes
+    - ec2:DescribeInstanceTypeOfferings
+    - ec2:DescribeAccountAttributes
+    - ec2:DescribeSubnets
+    - ec2:DescribeSecurityGroups
+    - ec2:DescribeVpcs
+    # - ec2:GetEbsEncryptionByDefault
+    # - ec2:GetEbsDefaultKmsKeyId
+    - ec2:DescribeImages
+    # - ec2:GetInstanceMetadataDefaults
+
+  allowedInstanceTypes:
+    - t2.nano
+    - t2.micro
+    - t2.small
+    - t3.nano
+    - t3.micro
+    - t3.small
+    - t3a.nano
+    - t3a.micro
+    - t3a.small
+    - t4g.nano
+    - t4g.micro
+    - t4g.small
+
+  forbiddenInstanceTypes:
+    - t2.medium
+    - t2.large
+    - t2.xlarge
+    - t2.2xlarge
+    - t3.medium
+    - t3.large
+    - t3.xlarge
+    - t3.2xlarge
+    - m4.large
+    - m4.xlarge
+    - m4.4xlarge
+    - m4.10xlarge
+    - m4.16xlarge
+    - m6g.large
+    - m6g.2xlarge
+    - m6g.metal
+    - m6gd.2xlarge
+    - m8g.medium
+    - m8g.xlarge
+    - m8g.4xlarge
+    - m8g.8xlarge
+    - m8g.16xlarge
+
+  otherForbiddenActions:
+    - amplify:CreateBranch
+    - amplify:GetApp
+    - appmesh:CreateRoute
+    - appmesh:ListMeshes
+    - appconfig:GetApplication
+    - appconfig:ListExtensions
+    - appsync:CreateApiKey
+    - appsync:GetApiCache
+    - artifact:GetReport
+    - artifact:ListReports
+    - athena:CreateDataCatalog
+    - athena:ExportNotebook
+    - athena:GetWorkGroup
+    - batch:DescribeJobs
+    - batch:UntagResource
+    - cloudwatch:DescribeAlarms
+    - cloudwatch:GetMetricData
+    - logs:CreateLogGroup
+    - logs:DescribeDeliveries
+    - config:DeleteConfigRule
+    - config:GetCustomRulePolicy
+
+  otherForbiddenServices:
+    - amplify
+    - amplify
+    - appmesh
+    - appmesh
+    - appconfig
+    - appconfig
+    - appsync
+    - appsync
+    - artifact
+    - artifact
+    - athena
+    - athena
+    - athena
+    - batch
+    - batch
+    - cloudwatch
+    - cloudwatch
+    - logs
+    - logs
+    - config
+    - config

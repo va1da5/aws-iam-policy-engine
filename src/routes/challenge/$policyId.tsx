@@ -111,7 +111,7 @@ function Challenge() {
         <div className="w-full">
           <div className="group relative rounded border border-solid border-zinc-200">
             <Editor
-              value={JSON.stringify(exercise.initialTemplate, null, 2)}
+              value={JSON.stringify(exercise.initialPolicy, null, 2)}
               onChange={setCurrentPolicy}
             />
             {error.length > 0 && (

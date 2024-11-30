@@ -184,7 +184,7 @@ export class IAMPolicyEngine {
     );
 
     const results = statements.map((statement) => {
-      const { Effect, ...elements } = statement;
+      const { Effect, Condition, ...elements } = statement;
 
       const outcome = Object.keys(elements).map((element) => {
         switch (element) {
@@ -198,12 +198,14 @@ export class IAMPolicyEngine {
               statement[element] as Action,
             );
           }
+
           case "NotAction": {
-            return this.actionMatches(
+            return !this.actionMatches(
               requestContext["action"],
               statement[element] as Action,
             );
           }
+
           case "Resource": {
             if (!requestContext["resource"]) return false;
             return this.resourceMatches(
@@ -220,6 +222,7 @@ export class IAMPolicyEngine {
             );
           }
 
+          // TODO: handle dead code
           case "Condition": {
             return this.conditionMatches(
               requestContext,
@@ -246,6 +249,13 @@ export class IAMPolicyEngine {
           }
         }
       });
+
+      // only evaluate conditions when the rest of the parameters match
+      if (outcome.every((match) => match) && isObject(Condition)) {
+        outcome.push(
+          this.conditionMatches(requestContext, Condition as Condition),
+        );
+      }
 
       if (outcome.every((match) => match) && Effect == "Deny") return false;
 
@@ -681,8 +691,9 @@ export class IAMPolicyEngine {
 
         if (setOperator == ConditionSetOperator.None) {
           if (!isString(context[contextKey])) {
-            // TODO: this needs to be fixed!!
-            throw new Error(`${contextKey} context key must be a single value`);
+            throw new Error(
+              `${contextKey} context key is undefined or contains invalid value`,
+            );
           }
 
           if (isString(conditionValue))

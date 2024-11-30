@@ -2,7 +2,7 @@
 name: AWS S3 Access To All Except Few Buckets
 description: Create an IAM identity policy that provides **full access** only to the AWS S3 service, but **does not allow modification** of the `acme-service-backups` and `acme-strategic-plans` S3 buckets and the objects inside them.
 policyType: IDENTITY_POLICY
-initialTemplate:
+initialPolicy:
   {
     "Version": "2012-10-17",
     "Statement": [{ "Effect": "Allow", "Action": "s3:*", "Resource": "*" }],

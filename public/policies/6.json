@@ -1,0 +1,106 @@
+{
+  "name": "Unauthenticated Access to AWS S3 Bucket from Specific IP Range",
+  "description": "Create an AWS S3 bucket policy that allows public access to a specific trusted IP ranges:\n  - *123.123.123.0/24*\n  - *31.33.7.0/24*\n",
+  "policyType": "RESOURCE_POLICY",
+  "initialPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        "Resource": "arn:aws:s3:::acme-financial-reports/*"
+      }
+    ]
+  },
+  "hints": [
+    "TBD"
+  ],
+  "solution": "Congratulations! Your created policy should look similar to the below:\n\n```json\n{\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Sid\": \"AllowPublicReadFromSpecificIPRange\",\n            \"Effect\": \"Allow\",\n            \"Principal\": \"*\",\n            \"Action\": [\n                \"s3:GetObject\",\n                \"s3:ListBucket\"\n            ],\n            \"Resource\": \"arn:aws:s3:::acme-financial-reports/*\",\n            \"Condition\": {\n                \"IpAddress\": {\n                    \"aws:SourceIp\": [\"123.123.123.0/24\", \"31.33.7.0/24\"]\n                }\n            }\n        }\n    ]\n}\n```\n",
+  "testCases": [
+    {
+      "context": {
+        "action": "s3:GetObject",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports/${files}",
+        "principal": {
+          "AWS": "*"
+        },
+        "aws:SourceIp": "${allowedIPs}"
+      },
+      "allow": true
+    },
+    {
+      "context": {
+        "action": "s3:ListBucket",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports",
+        "principal": {
+          "AWS": "*"
+        },
+        "aws:SourceIp": "${allowedIPs}"
+      },
+      "allow": true
+    },
+    {
+      "context": {
+        "action": "s3:ListBucket",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports",
+        "principal": {
+          "AWS": "*"
+        },
+        "aws:SourceIp": "${forbiddenIPs}"
+      },
+      "allow": false
+    },
+    {
+      "context": {
+        "action": "s3:GetObject",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports/${files}",
+        "principal": {
+          "AWS": "*"
+        },
+        "aws:SourceIp": "${forbiddenIPs}"
+      },
+      "allow": false
+    }
+  ],
+  "values": {
+    "files": [
+      "2023/12/anual-report.pdf",
+      "2023/12/tax-returns.pdf",
+      "2023/12/transactions.csv",
+      "2024/01/balance.csv",
+      "2024/02/ledger.csv",
+      "2024/03/compliance.pdf",
+      "2024/03/balance.csv",
+      "2024/04/projections.pdf",
+      "2024/05/ledger.csv",
+      "2024/06/shareholder-report.pdf"
+    ],
+    "allowedIPs": [
+      "123.123.123.23",
+      "123.123.123.42",
+      "31.33.7.13",
+      "123.123.123.52",
+      "123.123.123.107",
+      "31.33.7.169",
+      "123.123.123.80",
+      "31.33.7.61",
+      "31.33.7.243",
+      "123.123.123.8"
+    ],
+    "forbiddenIPs": [
+      "4.6.4.2",
+      "54.36.12.87",
+      "44.61.64.8",
+      "8.34.127.3",
+      "75.12.55.87",
+      "34.21.87.98",
+      "32.55.78.4",
+      "76.34.165.87",
+      "34.79.23.41",
+      "87.45.24.93"
+    ]
+  }
+}

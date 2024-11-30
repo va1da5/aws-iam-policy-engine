@@ -52,3 +52,5 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [IAM Policy Evaluation Series: policy evaluation chains | Amazon Web Services | 2023](https://www.youtube.com/watch?v=71-Gjo6a5Cs)
 - [IAM Expand](https://iam.cloudcopilot.io/tools/iam-expand)
 - [Access Analyzer policy check reference](https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-reference-policy-checks.html)
+- [permissions.cloud](https://aws.permissions.cloud/)
+- [asecure.cloud](https://asecure.cloud/l/scp/)

@@ -2,7 +2,7 @@
   "name": "Full Access to AWS S3 Service",
   "description": "Create an **IAM identity policy** for a role that provides full access **only** to the AWS S3 service.",
   "policyType": "IDENTITY_POLICY",
-  "initialTemplate": {},
+  "initialPolicy": {},
   "hints": [
     "Have a look into the [JSON policy document structure](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#policies-introduction)."
   ],

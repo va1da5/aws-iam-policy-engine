@@ -2,7 +2,7 @@
   "name": "Full Access to AWS S3 Service But No Bucket Deletion",
   "description": "Create an IAM identity policy that provides full access only to the AWS S3 service, but does not allow the deletion of any S3 buckets.",
   "policyType": "IDENTITY_POLICY",
-  "initialTemplate": {
+  "initialPolicy": {
     "Version": "2012-10-17",
     "Statement": [
       {
