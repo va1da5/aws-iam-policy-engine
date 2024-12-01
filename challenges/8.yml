@@ -14,7 +14,15 @@ policyType: SERVICE_CONTROL_POLICY
 initialPolicy:
   {
     "Version": "2012-10-17",
-    "Statement": [{ "Effect": "Allow", "Action": "*", "Resource": "*" }],
+    "Statement":
+      [
+        {
+          "Sid": "AWSFullAccess",
+          "Effect": "Allow",
+          "Action": "*",
+          "Resource": "*",
+        },
+      ],
   }
 hints:
   - >
