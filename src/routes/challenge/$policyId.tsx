@@ -103,7 +103,7 @@ function Challenge() {
           <h1 className="text-xl">
             Level {policyId}. {exercise.name}
           </h1>
-          <h2 className="font-medium">{getPolicyType(exercise.policyType)}</h2>
+          <h2 className="font-bold">{getPolicyType(exercise.policyType)}</h2>
         </div>
       </div>
 

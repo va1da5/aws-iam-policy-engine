@@ -2,7 +2,7 @@
 name: Name
 description: Description
 policyType: IDENTITY_POLICY | RESOURCE_POLICY | TRUST_POLICY | SERVICE_CONTROL_POLICY
-initialTemplate:
+initialPolicy:
   {
     "Version": "2012-10-17",
     "Statement": [{ "Effect": "Allow", "Action": "*", "Resource": "*" }],

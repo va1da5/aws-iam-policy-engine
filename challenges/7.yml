@@ -1,0 +1,140 @@
+---
+name: Trust Policy For 3rd Party Services
+description: |
+  Update the trust policy to allow third-party service to assume the associated role. Please find integration details below:
+  - **Service provider**: *Ultimate Cloud Security*
+  - **Service AWS account**: *222444666888*
+  - **External ID**: *6eeeed28-083d-47d1-a9a0-ff7dfb409490*
+  - **Source IP range**: *20.40.60.0/24*
+
+policyType: TRUST_POLICY
+initialPolicy:
+  {
+    "Version": "2012-10-17",
+    "Statement":
+      [
+        {
+          "Effect": "Allow",
+          "Principal": { "AWS": "arn:aws:iam::123456789012:root" },
+          "Action": "sts:AssumeRole",
+        },
+      ],
+  }
+hints:
+  - >
+    **Trust Policies**: These are policies associated with IAM roles.
+    A trust policy specifies which entities (users, roles, or AWS services) are allowed to assume the role.
+    Essentially, it defines the trust relationship between the role and the entities that can assume it.
+    Trust policies are crucial for enabling roles to be assumed by users or services from the same or different AWS accounts.
+
+  - "[How to use trust policies with IAM roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/)."
+solution: |
+  Congratulations! Your created policy should look similar to the below:
+
+  ```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::222444666888:root"
+        },
+        "Action": "sts:AssumeRole",
+        "Condition": {
+          "StringEquals": {
+            "sts:ExternalId": "6eeeed28-083d-47d1-a9a0-ff7dfb409490"
+          },
+          "IpAddress": {
+            "aws:SourceIp": "20.40.60.0/24"
+          }
+        }
+      }
+    ]
+  }
+  ```
+
+testCases:
+  - context:
+      action: "sts:AssumeRole"
+      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
+      principal:
+        AWS: ${allowedPrincipals}
+      sts:ExternalId: 6eeeed28-083d-47d1-a9a0-ff7dfb409490
+      aws:SourceIp: "20.40.60.80"
+    allow: true
+
+  - context:
+      action: "sts:AssumeRole"
+      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
+      principal:
+        AWS: arn:aws:iam::222444666888:role/integration
+      sts:ExternalId: 6eeeed28-083d-47d1-a9a0-ff7dfb409490
+      aws:SourceIp: ${allowedIPs}
+    allow: true
+
+  - context:
+      action: "sts:AssumeRole"
+      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
+      principal:
+        AWS: ${deniedPrincipals}
+      sts:ExternalId: 6eeeed28-083d-47d1-a9a0-ff7dfb409490
+      aws:SourceIp: ${allowedIPs}
+    allow: false
+
+  - context:
+      action: "sts:AssumeRole"
+      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
+      principal:
+        AWS: ${allowedPrincipals}
+      sts:ExternalId: ${deniedExternalIDs}
+      aws:SourceIp: "20.40.60.10"
+    allow: false
+
+  - context:
+      action: "sts:AssumeRole"
+      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
+      principal:
+        AWS: ${allowedPrincipals}
+      sts:ExternalId: "6eeeed28-083d-47d1-a9a0-ff7dfb409490"
+      aws:SourceIp: ${deniedIPs}
+    allow: false
+
+values:
+  allowedPrincipals:
+    - arn:aws:iam::222444666888:role/integration
+    - arn:aws:iam::222444666888:role/service
+    - arn:aws:iam::222444666888:role/support
+    - arn:aws:iam::222444666888:role/ingest
+
+  allowedIPs:
+    - "20.40.60.10"
+    - "20.40.60.32"
+    - "20.40.60.57"
+    - "20.40.60.92"
+    - "20.40.60.151"
+    - "20.40.60.44"
+    - "20.40.60.80"
+    - "20.40.60.252"
+
+  deniedPrincipals:
+    - arn:aws:iam::312487623891:role/integration
+    - arn:aws:iam::142587322882:role/test
+    - arn:aws:iam::212310384175:role/manager
+    - arn:aws:iam::347138326935:user/john
+    - arn:aws:iam::347138326935:role/support
+    - arn:aws:iam::980101925583:role/admin
+    - arn:aws:iam::649392119148:user/maria
+    - arn:aws:iam::185725520789:role/ec2
+
+  deniedExternalIDs:
+    - 619b01f4-ce81-439b-96e4-38e809a7d6f6
+    - 4b2e2e2e-2e2e-2e2e-2e2e-2e2e2e2e2e2e
+    - cfde34d6-b00d-4550-ac4b-4cb6dbad51dc
+    - fab49f9d-77dc-4abc-a193-ada509f3e0ed
+
+  deniedIPs:
+    - "135.15.35.56"
+    - "236.19.129.134"
+    - "68.222.109.57"
+    - "196.242.166.29"

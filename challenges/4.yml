@@ -18,7 +18,7 @@ initialPolicy:
       ],
   }
 hints:
-  - TBD
+  - "[AWS global condition context keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html)"
 solution: |
   Congratulations! Your created policy should look similar to the below:
 

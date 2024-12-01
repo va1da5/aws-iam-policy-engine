@@ -1,106 +1,240 @@
 {
-  "name": "Unauthenticated Access to AWS S3 Bucket from Specific IP Range",
-  "description": "Create an AWS S3 bucket policy that allows public access to a specific trusted IP ranges:\n  - *123.123.123.0/24*\n  - *31.33.7.0/24*\n",
-  "policyType": "RESOURCE_POLICY",
+  "name": "AWS S3 Access To Personal User Directories",
+  "description": "Implement a policy that restricts access solely to the user-assigned directory. Any actions that could potentially modify the bucket must be strictly prohibited.",
+  "policyType": "IDENTITY_POLICY",
   "initialPolicy": {
     "Version": "2012-10-17",
     "Statement": [
       {
         "Effect": "Allow",
-        "Action": [
-          "s3:GetObject",
-          "s3:ListBucket"
-        ],
-        "Resource": "arn:aws:s3:::acme-financial-reports/*"
+        "Action": "s3:*",
+        "Resource": "*"
       }
     ]
   },
   "hints": [
-    "TBD"
+    "Is there a way to make AWS IAM policies more dynamic?",
+    "[IAM policy elements: Variables and tags](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html)"
   ],
-  "solution": "Congratulations! Your created policy should look similar to the below:\n\n```json\n{\n    \"Version\": \"2012-10-17\",\n    \"Statement\": [\n        {\n            \"Sid\": \"AllowPublicReadFromSpecificIPRange\",\n            \"Effect\": \"Allow\",\n            \"Principal\": \"*\",\n            \"Action\": [\n                \"s3:GetObject\",\n                \"s3:ListBucket\"\n            ],\n            \"Resource\": \"arn:aws:s3:::acme-financial-reports/*\",\n            \"Condition\": {\n                \"IpAddress\": {\n                    \"aws:SourceIp\": [\"123.123.123.0/24\", \"31.33.7.0/24\"]\n                }\n            }\n        }\n    ]\n}\n```\n",
+  "solution": "Congratulations! Your created policy should look similar to the below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": [\n        \"arn:aws:s3:::acme-user-data/${aws:username}/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:ListBucket\",\n      \"Resource\": [\n        \"arn:aws:s3:::acme-user-data\"\n      ],\n      \"Condition\": {\n        \"StringLike\": {\n          \"s3:prefix\": [\"${aws:username}/*\"]\n        }\n      }\n    }\n  ]\n}\n```\n",
   "testCases": [
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports/${files}",
-        "principal": {
-          "AWS": "*"
-        },
-        "aws:SourceIp": "${allowedIPs}"
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}",
+        "aws:username": "${users}",
+        "s3:prefix": "${users}/${files}"
+      },
+      "allow": true
+    },
+    {
+      "context": {
+        "action": "s3:PutObject",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}",
+        "aws:username": "${users}",
+        "s3:prefix": "${users}/${files}"
+      },
+      "allow": true
+    },
+    {
+      "context": {
+        "action": "s3:DeleteObject",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}",
+        "aws:username": "${users}",
+        "s3:prefix": "${users}/${files}"
       },
       "allow": true
     },
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports",
-        "principal": {
-          "AWS": "*"
-        },
-        "aws:SourceIp": "${allowedIPs}"
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "brian",
+        "s3:prefix": "brian/${files}"
       },
       "allow": true
     },
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports",
-        "principal": {
-          "AWS": "*"
-        },
-        "aws:SourceIp": "${forbiddenIPs}"
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "brian",
+        "s3:prefix": "brian/${files}"
+      },
+      "allow": true
+    },
+    {
+      "context": {
+        "action": "s3:ListBucket",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "emily",
+        "s3:prefix": "emily/${files}"
+      },
+      "allow": true
+    },
+    {
+      "context": {
+        "action": "s3:ListBucket",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "jackson",
+        "s3:prefix": "peter/${files}"
       },
       "allow": false
     },
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports/${files}",
-        "principal": {
-          "AWS": "*"
-        },
-        "aws:SourceIp": "${forbiddenIPs}"
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}",
+        "aws:username": "${incorrectUsers}",
+        "s3:prefix": "${users}/${files}"
+      },
+      "allow": false
+    },
+    {
+      "context": {
+        "action": "s3:PutObject",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}",
+        "aws:username": "${incorrectUsers}",
+        "s3:prefix": "${users}/${files}"
+      },
+      "allow": false
+    },
+    {
+      "context": {
+        "action": "s3:DeleteObject",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}",
+        "aws:username": "${incorrectUsers}",
+        "s3:prefix": "${users}/${files}"
+      },
+      "allow": false
+    },
+    {
+      "context": {
+        "action": "${restrictedBucketActions}",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "brian"
+      },
+      "allow": false
+    },
+    {
+      "context": {
+        "action": "${restrictedBucketActions}",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "isabella"
+      },
+      "allow": false
+    },
+    {
+      "context": {
+        "action": "${restrictedBucketActions}",
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-user-data",
+        "aws:username": "olivia"
       },
       "allow": false
     }
   ],
   "values": {
+    "users": [
+      "adelina",
+      "brian",
+      "carol",
+      "daniel",
+      "emily",
+      "felix",
+      "george",
+      "hannah",
+      "isabella",
+      "jackson",
+      "kate",
+      "luke",
+      "mary",
+      "noah",
+      "olivia",
+      "peter",
+      "quinn",
+      "rachel",
+      "sam",
+      "tom",
+      "ursula",
+      "victor",
+      "william",
+      "xavier",
+      "yvonne",
+      "zoe"
+    ],
+    "incorrectUsers": [
+      "zoe",
+      "adelina",
+      "brian",
+      "carol",
+      "daniel",
+      "emily",
+      "felix",
+      "george",
+      "hannah",
+      "isabella",
+      "jackson",
+      "kate",
+      "luke",
+      "mary",
+      "noah",
+      "olivia",
+      "peter",
+      "quinn",
+      "rachel",
+      "sam",
+      "tom",
+      "ursula",
+      "victor",
+      "william",
+      "xavier",
+      "yvonne"
+    ],
     "files": [
-      "2023/12/anual-report.pdf",
-      "2023/12/tax-returns.pdf",
-      "2023/12/transactions.csv",
-      "2024/01/balance.csv",
-      "2024/02/ledger.csv",
-      "2024/03/compliance.pdf",
-      "2024/03/balance.csv",
-      "2024/04/projections.pdf",
-      "2024/05/ledger.csv",
-      "2024/06/shareholder-report.pdf"
+      "2020.sql",
+      "2020.tar.bz2",
+      "_wpeprivate/config.json",
+      "accounts.txt",
+      "adfs/services/trust/2005/windowstransport",
+      "adm/index.html",
+      "admin-serv/config/admpw",
+      "admin/.config",
+      "all/modules/ogdi_field/plugins/dataTables/extras/TableTools/media/swf/ZeroClipboard.swf",
+      "apache/logs/access.log",
+      "api/swagger.yml",
+      "apiserver-aggregator.cert",
+      "app/composer.json",
+      "app/config/databases.yml",
+      "app/etc/config.xml",
+      "apps/frontend/config/app.yml",
+      "clients.tar.gz",
+      "checked_accounts.txt",
+      "archive.tar.gz",
+      "article/admin/admin.asp",
+      "auditevents.json",
+      "autoconfig.json",
+      "axis2/axis2-web/HappyAxis.jsp",
+      "backup.zip",
+      "basic_auth.csv",
+      "ChangeLog.md"
     ],
-    "allowedIPs": [
-      "123.123.123.23",
-      "123.123.123.42",
-      "31.33.7.13",
-      "123.123.123.52",
-      "123.123.123.107",
-      "31.33.7.169",
-      "123.123.123.80",
-      "31.33.7.61",
-      "31.33.7.243",
-      "123.123.123.8"
-    ],
-    "forbiddenIPs": [
-      "4.6.4.2",
-      "54.36.12.87",
-      "44.61.64.8",
-      "8.34.127.3",
-      "75.12.55.87",
-      "34.21.87.98",
-      "32.55.78.4",
-      "76.34.165.87",
-      "34.79.23.41",
-      "87.45.24.93"
+    "restrictedBucketActions": [
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:DeleteBucketWebsite",
+      "s3:PutBucketAcl",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketLogging",
+      "s3:PutBucketPublicAccessBlock",
+      "s3:PutBucketRequestPayment",
+      "s3:PutBucketTagging",
+      "s3:PutBucketVersioning",
+      "s3:PutBucketWebsite",
+      "s3:PutEncryptionConfiguration",
+      "s3:PutLifecycleConfiguration",
+      "s3:PutReplicationConfiguration",
+      "s3:PauseReplication"
     ]
   }
 }

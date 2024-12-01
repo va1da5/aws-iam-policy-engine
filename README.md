@@ -9,7 +9,8 @@ An attempt to simulate the AWS IAM policy decision engine primarily for learning
 - [x] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
 - [ ] More Tests for multivalued context
 - [x] Support for variables in policies
-- [ ] Bug: cursor in the policy editor jumps while writing JSON
+- [x] Bug: cursor in the policy editor jumps while writing JSON
+- [ ] Report issue option
 
 ## AWS IAM Policies
 
