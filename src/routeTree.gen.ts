@@ -14,6 +14,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SandboxImport } from './routes/sandbox'
+import { Route as FinishImport } from './routes/finish'
 import { Route as ChallengeIndexImport } from './routes/challenge/index'
 import { Route as ChallengeErrorImport } from './routes/challenge/error'
 import { Route as ChallengePolicyIdImport } from './routes/challenge/$policyId'
@@ -27,6 +28,12 @@ const IndexLazyImport = createFileRoute('/')()
 const SandboxRoute = SandboxImport.update({
   id: '/sandbox',
   path: '/sandbox',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const FinishRoute = FinishImport.update({
+  id: '/finish',
+  path: '/finish',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -65,6 +72,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
+    '/finish': {
+      id: '/finish'
+      path: '/finish'
+      fullPath: '/finish'
+      preLoaderRoute: typeof FinishImport
+      parentRoute: typeof rootRoute
+    }
     '/sandbox': {
       id: '/sandbox'
       path: '/sandbox'
@@ -100,6 +114,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
+  '/finish': typeof FinishRoute
   '/sandbox': typeof SandboxRoute
   '/challenge/$policyId': typeof ChallengePolicyIdRoute
   '/challenge/error': typeof ChallengeErrorRoute
@@ -108,6 +123,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
+  '/finish': typeof FinishRoute
   '/sandbox': typeof SandboxRoute
   '/challenge/$policyId': typeof ChallengePolicyIdRoute
   '/challenge/error': typeof ChallengeErrorRoute
@@ -117,6 +133,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
+  '/finish': typeof FinishRoute
   '/sandbox': typeof SandboxRoute
   '/challenge/$policyId': typeof ChallengePolicyIdRoute
   '/challenge/error': typeof ChallengeErrorRoute
@@ -127,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/finish'
     | '/sandbox'
     | '/challenge/$policyId'
     | '/challenge/error'
@@ -134,6 +152,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/finish'
     | '/sandbox'
     | '/challenge/$policyId'
     | '/challenge/error'
@@ -141,6 +160,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/finish'
     | '/sandbox'
     | '/challenge/$policyId'
     | '/challenge/error'
@@ -150,6 +170,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
+  FinishRoute: typeof FinishRoute
   SandboxRoute: typeof SandboxRoute
   ChallengePolicyIdRoute: typeof ChallengePolicyIdRoute
   ChallengeErrorRoute: typeof ChallengeErrorRoute
@@ -158,6 +179,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
+  FinishRoute: FinishRoute,
   SandboxRoute: SandboxRoute,
   ChallengePolicyIdRoute: ChallengePolicyIdRoute,
   ChallengeErrorRoute: ChallengeErrorRoute,
@@ -175,6 +197,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/finish",
         "/sandbox",
         "/challenge/$policyId",
         "/challenge/error",
@@ -183,6 +206,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.lazy.tsx"
+    },
+    "/finish": {
+      "filePath": "finish.tsx"
     },
     "/sandbox": {
       "filePath": "sandbox.tsx"

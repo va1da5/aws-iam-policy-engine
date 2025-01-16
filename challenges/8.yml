@@ -1,14 +1,14 @@
 ---
 name: SCP Allow Only Specific Services
 description: |
-  Update the SCP policy to restrict access to only specific services. Please see the list below:
+  Update the Service Control Policy to restrict access to only specific services in order to prevent the potential misuse of cloud resources. Please see the list of allowed services below:
     - Amazon S3
     - AWS Lambda
     - Amazon CloudFront
     - Amazon CloudWatch
 
   The following role needs to be exempt from the restrictions:
-    - *arn:aws:iam:::role/cloudAdmin*
+    - **arn:aws:iam:::role/cloudAdmin**
 
 policyType: SERVICE_CONTROL_POLICY
 initialPolicy:
@@ -77,32 +77,50 @@ testCases:
 
   - context:
       action: ${lambdaActions}
-      resource: arn:lambda:us-east-1:123456789012:function:*
+      resource: arn:aws:lambda:us-east-1:123456789012:function:*
       aws:PrincipalArn: arn:aws:iam::123456789012:user/alice
     allow: true
 
   - context:
       action: ${cloudfrontActions}
-      resource: arn:cloudfront::123456789012:*
+      resource: arn:aws:cloudfront::123456789012:*
       aws:PrincipalArn: arn:aws:iam::123456789012:user/john
     allow: true
 
   - context:
       action: ${cloudwatchActions}
-      resource: arn:cloudwatch:us-east-1:123456789012:*
+      resource: arn:aws:cloudwatch:us-east-1:123456789012:*
       aws:PrincipalArn: arn:aws:iam::123456789012:role/monitoring
     allow: true
 
   - context:
       action: ${deniedActions}
-      resource: arn::us-east-1:123456789012:*
+      resource: arn:aws:${deniedServices}:us-east-1:123456789012:*
       aws:PrincipalArn: arn:aws:iam::123456789012:user/robert
     allow: false
 
   - context:
       action: ${deniedActions}
-      resource: arn::us-east-1:123456789012:*
+      resource: arn:aws:${deniedServices}:us-east-1:123456789012:*
       aws:PrincipalArn: arn:aws:iam::123456789012:role/cloudAdmin
+    allow: true
+
+  - context:
+      action: ${cloudwatchActions}
+      resource: arn:aws:cloudwatch:us-east-1:123456789012:*
+      aws:PrincipalArn: arn:aws:iam::123456789012:role/cloudAdmin
+    allow: true
+
+  - context:
+      action: ${s3Actions}
+      resource: arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket
+      aws:PrincipalArn: arn:aws:iam::123456789012:user/cloudAdmin
+    allow: true
+
+  - context:
+      action: ${lambdaActions}
+      resource: arn:aws:lambda:us-east-1:123456789012:function:*
+      aws:PrincipalArn: arn:aws:iam::123456789012:user/cloudAdmin
     allow: true
 
 values:
@@ -472,135 +490,205 @@ values:
     - cloudwatch:UpdateServiceLevelObjective
 
   deniedActions:
-    - ec2:AcceptVpcPeeringConnection
-    - ec2:AdvertiseByoipCidr
-    - ec2:AllocateAddress
-    - ec2:AllocateHosts
-    - ec2:CopyImage
-    - ec2:CopySnapshot
-    - ec2:CreateCapacityReservation
-    - ec2:DeleteLocalGatewayRouteTableVpcAssociation
-    - ec2:DeleteManagedPrefixList
-    - ec2:DeleteNatGateway
-    - ec2:DeleteNetworkAcl
-    - ec2:DeleteNetworkAclEntry
-    - ec2:DescribeIdFormat
-    - ec2:DescribeIdentityIdFormat
-    - ec2:DescribeImageAttribute
-    - ec2:DescribeImages
-    - ec2:DescribeVolumeAttribute
-    - ec2:DescribeVolumeStatus
-    - ec2:DescribeVolumes
-    - iam:AddUserToGroup
-    - iam:AttachGroupPolicy
-    - iam:AttachRolePolicy
-    - iam:AttachUserPolicy
-    - iam:ChangePassword
-    - iam:CreateAccessKey
-    - iam:CreateAccountAlias
-    - iam:CreateGroup
-    - iam:GetPolicy
-    - iam:GetPolicyVersion
-    - iam:GetRole
-    - iam:GetRolePolicy
-    - iam:GetSAMLProvider
-    - iam:GetSSHPublicKey
-    - iam:PassRole
-    - iam:PutGroupPolicy
-    - iam:PutRolePermissionsBoundary
-    - iam:PutRolePolicy
-    - kms:CreateAlias
-    - kms:CreateCustomKeyStore
-    - kms:CreateGrant
-    - kms:CreateKey
-    - kms:Decrypt
-    - kms:DeleteAlias
-    - sts:AssumeRole
-    - sts:AssumeRoleWithSAML
-    - sts:AssumeRoleWithWebIdentity
-    - sts:AssumeRoot
-    - sts:DecodeAuthorizationMessage
-    - sts:GetAccessKeyInfo
-    - sts:GetCallerIdentity
-    - sts:GetFederationToken
-    - sts:GetServiceBearerToken
-    - sts:GetSessionToken
-    - sts:SetContext
-    - sts:SetSourceIdentity
-    - sts:TagSession
-    - sqs:AddPermission
+    - aps:ListAlertManagerSilences
+    - appconfig:GetLatestConfiguration
+    - ce:GetCostCategories
+    - mediatailor:ListPlaybackConfigurations
+    - lex:PutBot
+    - osis:ListPipelines
+    - vpc-lattice:ListResourceConfigurations
+    - lightsail:GetDomains
+    - ec2:DescribeCustomerGateways
+    - cognito-idp:UpdateUserPoolClient
+    - datazone:CreateGlossaryTerm
+    - dms:DeleteEndpoint
+    - forecast:DeleteDatasetGroup
+    - codeconnections:GetSyncBlockerSummary
+    - amplify:ListArtifacts
+    - a4b:GetContact
+    - fsx:CreateVolumeFromBackup
+    - backup-gateway:ListGateways
+    - storagegateway:CreateTapes
+    - redshift-serverless:GetTableRestoreStatus
+    - storagegateway:UpdateAutomaticTapeCreationPolicy
+    - omics:DeleteAnnotationStore
+    - lightsail:DeleteBucketAccessKey
+    - glue:GetCatalog
+    - chime:CreateMediaStreamPipeline
+    - glacier:GetJobOutput
+    - bedrock:ListImportedModels
+    - elasticache:DescribeGlobalReplicationGroups
+    - databrew:DescribeRuleset
+    - eks:AccessKubernetesApi
+    - cloudformation:EstimateTemplateCost
+    - athena:ListTagsForResource
+    - opsworks:CreateDeployment
+    - verified-access:AllowVerifiedAccess
+    - ec2:DescribeScheduledInstances
+    - iotwireless:GetServiceProfile
+    - license-manager-user-subscriptions:DeleteLicenseServerEndpoint
+    - elasticache:DecreaseNodeGroupsInGlobalReplicationGroup
+    - proton:ListEnvironmentTemplateVersions
+    - codecommit:UpdateDefaultBranch
+    - sqlworkbench:UpdateAccountConnectionSettings
+    - iot:CreateScheduledAudit
+    - kendra:UpdateFeaturedResultsSet
+    - vendor-insights:ListDataSources
+    - workdocs:DeleteDocumentVersion
+    - globalaccelerator:ListAccelerators
+    - wickr:ListTagsForResource
+    - forecast:DescribeDataset
+    - elasticache:DescribeUsers
+    - quicksight:DeleteIAMPolicyAssignment
+    - rds:ModifyDBShardGroup
+    - quicksight:CancelIngestion
+    - backup:UpdateRegionSettings
+    - batch:DeleteSchedulingPolicy
+    - panorama:UpdateDeviceMetadata
+    - iot-device-tester:CheckVersion
+    - guardduty:AcceptAdministratorInvitation
+    - globalaccelerator:DeprovisionByoipCidr
+    - bedrock:DeleteAgentActionGroup
+    - guardduty:GetFindings
     - sqs:CancelMessageMoveTask
-    - sqs:ChangeMessageVisibility
-    - sqs:CreateQueue
-    - sqs:DeleteMessage
-    - sqs:DeleteQueue
-    - sqs:GetQueueAttributes
-    - sqs:GetQueueUrl
-    - sqs:ListDeadLetterSourceQueues
-    - sqs:ListMessageMoveTasks
-    - sqs:ListQueueTags
-    - sqs:ListQueues
-    - sqs:PurgeQueue
-    - sqs:ReceiveMessage
-    - sqs:RemovePermission
-    - sqs:SendMessage
-    - sqs:SetQueueAttributes
-    - sqs:StartMessageMoveTask
-    - sqs:TagQueue
-    - sqs:UntagQueue
-    - sns:SetSMSAttributes
-    - sns:SetSubscriptionAttributes
-    - sns:SetTopicAttributes
-    - sns:Subscribe
-    - sns:TagResource
-    - sns:Unsubscribe
-    - sns:UntagResource
-    - dynamodb:DescribeBackup
-    - dynamodb:DescribeContinuousBackups
-    - dynamodb:DescribeContributorInsights
-    - dynamodb:DescribeEndpoints
-    - dynamodb:DescribeExport
-    - dynamodb:UpdateGlobalTableSettings
-    - dynamodb:UpdateGlobalTableVersion
-    - dynamodb:UpdateItem
-    - ssm:PutCalendar
-    - ssm:PutComplianceItems
-    - ssm:PutConfigurePackageResult
-    - ssm:PutInventory
-    - ssm:PutParameter
-    - ssm:PutResourcePolicy
-    - ses:SetIdentityHeadersInNotificationsEnabled
-    - ses:SetIdentityMailFromDomain
-    - ses:SetIdentityNotificationTopic
-    - ses:SetReceiptRulePosition
-    - ses:StartArchiveExport
-    - ses:StartArchiveSearch
-    - transcribe:CreateMedicalVocabulary
-    - transcribe:CreateVocabulary
-    - transcribe:CreateVocabularyFilter
-    - transcribe:DeleteCallAnalyticsCategory
-    - transcribe:DeleteCallAnalyticsJob
-    - transcribe:DeleteLanguageModel
-    - transcribe:DeleteMedicalScribeJob
-    - xray:GetTraceGraph
-    - xray:GetTraceSegmentDestination
-    - xray:GetTraceSummaries
-    - xray:Link
-    - xray:ListResourcePolicies
-    - xray:ListRetrievedTraces
-    - swf:ListTagsForResource
-    - swf:ListWorkflowTypes
-    - swf:PollForActivityTask
-    - swf:PollForDecisionTask
-    - swf:RecordActivityTaskHeartbeat
-    - swf:RecordMarker
-    - swf:RegisterActivityType
-    - swf:RegisterDomain
-    - swf:RegisterWorkflowType
-    - sso:DetachCustomerManagedPolicyReferenceFromPermissionSet
-    - sso:DetachManagedPolicyFromPermissionSet
-    - sso:DisassociateDirectory
-    - sso:DisassociateProfile
-    - sso:GetApplicationAccessScope
-    - sso:GetApplicationAssignmentConfiguration
-    - sso:GetApplicationAuthenticationMethod
+    - dataexchange:GetJob
+    - workspaces-web:UpdateTrustStore
+    - cloudsearch:DeleteIndexField
+    - sns:GetEndpointAttributes
+    - sqlworkbench:UpdateFolder
+    - ecr:DescribeRepositoryCreationTemplates
+    - sts:AssumeRoot
+    - proton:DeleteServiceSyncConfig
+    - omics:ListRunCaches
+    - voiceid:DescribeFraudsterRegistrationJob
+    - aws-marketplace:Subscribe
+    - quicksight:SearchUsers
+    - config:DescribeConfigurationAggregatorSourcesStatus
+    - events:DisableRule
+    - shield:ListTagsForResource
+    - ec2:DisassociateClientVpnTargetNetwork
+    - datazone:DeleteSubscriptionGrant
+    - connect-campaigns:UpdateCampaignOutboundCallConfig
+    - chime:ListAppInstanceBots
+    - app-integrations:ListDataIntegrationAssociations
+    - lightsail:GetDisks
+    - docdb-elastic:GetPendingMaintenanceAction
+    - aps:DescribeAlertManagerDefinition
+    - notifications:RegisterNotificationHub
+    - frauddetector:UpdateList
+    - glue:SendFeedback
+    - backup-gateway:UntagResource
+    - rekognition:GetCelebrityInfo
+    - cognito-identity:UnlinkIdentity
+    - rolesanywhere:DisableTrustAnchor
+    - iot:DescribeDimension
+    - sagemaker:CreateStudioLifecycleConfig
+    - quicksight:DeleteDataSource
+    - datasync:DescribeLocationAzureBlob
+    - redshift:CancelQuerySession
+    - quicksight:DescribeUser
+    - elastic-inference:UntagResource
+    - m2:UpdateEnvironment
+    - secretsmanager:ListSecrets
+
+  deniedServices:
+    - aps
+    - appconfig
+    - ce
+    - mediatailor
+    - lex
+    - osis
+    - vpc-lattice
+    - lightsail
+    - ec2
+    - cognito-idp
+    - datazone
+    - dms
+    - forecast
+    - codeconnections
+    - amplify
+    - a4b
+    - fsx
+    - backup-gateway
+    - storagegateway
+    - redshift-serverless
+    - storagegateway
+    - omics
+    - lightsail
+    - glue
+    - chime
+    - glacier
+    - bedrock
+    - elasticache
+    - databrew
+    - eks
+    - cloudformation
+    - athena
+    - opsworks
+    - verified-access
+    - ec2
+    - iotwireless
+    - license-manager-user-subscriptions
+    - elasticache
+    - proton
+    - codecommit
+    - sqlworkbench
+    - iot
+    - kendra
+    - vendor-insights
+    - workdocs
+    - globalaccelerator
+    - wickr
+    - forecast
+    - elasticache
+    - quicksight
+    - rds
+    - quicksight
+    - backup
+    - batch
+    - panorama
+    - iot-device-tester
+    - guardduty
+    - globalaccelerator
+    - bedrock
+    - guardduty
+    - sqs
+    - dataexchange
+    - workspaces-web
+    - cloudsearch
+    - sns
+    - sqlworkbench
+    - ecr
+    - sts
+    - proton
+    - omics
+    - voiceid
+    - aws-marketplace
+    - quicksight
+    - config
+    - events
+    - shield
+    - ec2
+    - datazone
+    - connect-campaigns
+    - chime
+    - app-integrations
+    - lightsail
+    - docdb-elastic
+    - aps
+    - notifications
+    - frauddetector
+    - glue
+    - backup-gateway
+    - rekognition
+    - cognito-identity
+    - rolesanywhere
+    - iot
+    - sagemaker
+    - quicksight
+    - datasync
+    - redshift
+    - quicksight
+    - elastic-inference
+    - m2
+    - secretsmanager

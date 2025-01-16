@@ -9,16 +9,23 @@ import {
 
 type Props = {
   solution: string;
+  status: {
+    passed: number;
+    failed: number;
+  };
   children?: React.ReactNode;
 };
 
-export default function Solution({ solution, children }: Props) {
+export default function Solution({ solution, status, children }: Props) {
   return (
     <Dialog>
-      <DialogTrigger className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-600/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0">
+      <DialogTrigger
+        disabled={status.failed !== 0}
+        className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-slate-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-600/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+      >
         Solve
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100%-100px)] max-w-2xl overflow-y-auto px-5 pb-14 pt-10">
         <DialogHeader>
           <DialogTitle>
             You have successfully solved this challenge!

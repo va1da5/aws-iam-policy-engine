@@ -10,15 +10,16 @@ function Index() {
   const navigate = useNavigate({ from: "/" });
 
   return (
-    <div className="prose lg:prose-xl mx-auto mb-28 w-full">
+    <div className="prose mx-auto mb-28 w-full lg:prose-xl">
       <Markdown>
         {`
-# Welcome!
+## 👋 Welcome!
 
-AWS IAM is a fundamental pillar of the public cloud security. It acts as the de facto perimeter between your application and the vast expanse of the public internet. Misconfigurations within IAM can lead to access vulnerabilities, giving malicious actors opportunities to exploit them. The consequences of such oversights can be severe, so it’s advisable to invest time in learning IAM concepts to mitigate associated risks. Understanding the intricacies of IAM policies is paramount; it empowers you to craft them more effectively and ensures that no over-permissive access is granted.
+Greetings, fellow adventurer! Welcome to this page. Here, you’re about to embark on a journey filled with AWS IAM-related challenges that will put your skills to the test. So, buckle up and prepare to flex those brain muscles while you learn something new.
 
+AWS IAM is a fundamental pillar of public cloud security. It serves as the de facto barrier between your application and the vast expanse of the public internet. Misconfigurations within IAM can lead to access vulnerabilities, providing malicious actors with opportunities to exploit them. The consequences of such oversights can be quite severe, so it’s wise to invest time in grasping IAM concepts to mitigate associated risks. Understanding the intricacies of IAM policies is paramount; it empowers you to craft them more effectively and ensures that no overly permissive access is granted.
 
-These challenges will assist you in familiarizing yourself with AWS IAM policies and present you with important concepts that will enhance your understanding when crafting your own policies.
+These challenges will help you familiarize yourself with AWS IAM policies and introduce you to important concepts that will enhance your understanding when crafting your own policies. Now, let’s dive in and conquer these challenges together!
 `}
       </Markdown>
 
@@ -34,7 +35,7 @@ These challenges will assist you in familiarizing yourself with AWS IAM policies
             })
           }
         >
-          Start Challenge!
+          Begin Challenge!
         </Button>
       </div>
     </div>

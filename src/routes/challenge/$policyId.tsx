@@ -13,6 +13,7 @@ import Hints from "@/components/hints";
 import TestCases from "@/components/test-cases";
 import Markdown from "@/components/markdown";
 import Solution from "@/components/solution";
+import { numberOfChallenges } from "@/constants";
 
 export const Route = createFileRoute("/challenge/$policyId")({
   component: Challenge,
@@ -99,8 +100,8 @@ function Challenge() {
   return (
     <div>
       <div className="mb-2 grid grid-cols-2 gap-6">
-        <div className="flex items-end justify-between">
-          <h1 className="text-xl">
+        <div className="">
+          <h1 className="text-lg">
             Level {policyId}. {exercise.name}
           </h1>
           <h2 className="font-bold">{getPolicyType(exercise.policyType)}</h2>
@@ -122,8 +123,8 @@ function Challenge() {
           </div>
 
           <div className="mt-5">
-            <p className="text-lg font-medium">Description</p>
-            <div className="prose prose-slate w-full dark:prose-invert">
+            <p className="text-lg font-medium">Challenge</p>
+            <div className="prose prose-slate w-full dark:prose-invert prose-p:my-1 prose-ul:mt-0 prose-li:m-0">
               <Markdown>{exercise.description}</Markdown>
             </div>
           </div>
@@ -133,22 +134,38 @@ function Challenge() {
           <Status status={status}>
             <div className="flex gap-2">
               {!isPending && (
-                <Solution solution={exercise.solution}>
-                  <div className="mt-5 flex w-full justify-center">
-                    <Button
-                      onClick={() =>
-                        navigate({
-                          from: `/challenge/${policyId}`,
-                          to: Route.to,
-                          replace: true,
-                          params: {
-                            policyId: String(parseInt(policyId) + 1),
-                          },
-                        })
-                      }
-                    >
-                      Next Challenge
-                    </Button>
+                <Solution solution={exercise.solution} status={status}>
+                  <div className="mt-10 flex w-full justify-center">
+                    {parseInt(policyId) < numberOfChallenges && (
+                      <Button
+                        onClick={() =>
+                          navigate({
+                            from: `/challenge/${policyId}`,
+                            to: Route.to,
+                            replace: true,
+                            params: {
+                              policyId: String(parseInt(policyId) + 1),
+                            },
+                          })
+                        }
+                      >
+                        Next Challenge
+                      </Button>
+                    )}
+
+                    {parseInt(policyId) >= numberOfChallenges && (
+                      <Button
+                        onClick={() =>
+                          navigate({
+                            from: `/challenge/${policyId}`,
+                            to: "/finish",
+                            replace: true,
+                          })
+                        }
+                      >
+                        Finish
+                      </Button>
+                    )}
                   </div>
                 </Solution>
               )}
