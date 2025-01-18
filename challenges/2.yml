@@ -1,15 +1,24 @@
 ---
 name: Full Access to AWS S3 Service But No Bucket Deletion
-description: Create an IAM identity policy that provides full access only to the AWS S3 service, but does not allow the deletion of any S3 buckets.
+description: |
+  You received a complaint from a colleague regarding the unauthorized deletion of their bucket.
+  Upon reflection, it seems prudent to implement measures to prevent such deletions in the future.
+  Consequently, you have decided to update the policy and introduce restrictions to safeguard against this issue.
+
+  Please update the IAM identity policy to ensure that the deletion of any S3 buckets is not allowed.
+
 policyType: IDENTITY_POLICY
 initialPolicy:
   {
     "Version": "2012-10-17",
     "Statement": [{ "Effect": "Allow", "Action": "s3:*", "Resource": "*" }],
   }
-hints: []
+hints:
+  - "[`s3:DeleteBucket`](https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucket.html) actions must not be allowed"
+  - "`Deny` effect might help you in this situation"
+  - Can you define multiple statements in the same policy? 😉
 solution: |
-  Congratulations! Your created policy should look similar to the below:
+  Well done! You did it! Your policy should look very similar to the one below:
 
   ```json
   {
@@ -28,6 +37,8 @@ solution: |
     ]
   }
   ```
+
+  The buckets should be safe from deletion, right?! Let's see what exciting challenges await you next!
 
 testCases:
   - context:

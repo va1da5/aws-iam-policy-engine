@@ -1,9 +1,9 @@
-import Markdown from "react-markdown";
-import { createFileRoute } from "@tanstack/react-router";
+import Markdown from 'react-markdown'
+import { createLazyFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute("/finish")({
+export const Route = createLazyFileRoute('/finish')({
   component: RouteComponent,
-});
+})
 
 function RouteComponent() {
   return (
@@ -18,5 +18,5 @@ If you’ve got some brilliant ideas for new challenges or any other enhancement
 `}
       </Markdown>
     </div>
-  );
+  )
 }

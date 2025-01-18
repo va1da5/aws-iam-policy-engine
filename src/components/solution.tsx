@@ -25,15 +25,17 @@ export default function Solution({ solution, status, children }: Props) {
       >
         Solve
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100%-100px)] max-w-2xl overflow-y-auto px-5 pb-14 pt-10">
+      <DialogContent className="max-h-[calc(100%-100px)] overflow-y-auto p-8 pb-14 lg:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>
-            You have successfully solved this challenge!
-          </DialogTitle>
-
-          <div>
-            <Markdown>{solution}</Markdown>
-            {children}
+          <div className="flex w-full justify-center">
+            <div>
+              <DialogTitle>
+                You have successfully solved this challenge!
+              </DialogTitle>
+              <br />
+              <Markdown className="lg:prose-lg">{solution}</Markdown>
+              {children}
+            </div>
           </div>
         </DialogHeader>
       </DialogContent>

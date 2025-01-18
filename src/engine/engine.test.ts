@@ -234,6 +234,7 @@ describe("Test Validation", () => {
   test("Invalid policy element policy", () => {
     expect(() => {
       new IAMPolicyEngine({
+        // @ts-expect-error Object literal may only specify known properties, but 'version' does not exist in type 'Policy'. Did you mean to write 'Version'?
         version: "2012-10-17",
         Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
       });
@@ -242,12 +243,14 @@ describe("Test Validation", () => {
     expect(() => {
       new IAMPolicyEngine({
         Version: "2012-10-17",
+        // @ts-expect-error Object literal may only specify known properties, but 'statement' does not exist in type 'Policy'. Did you mean to write 'Statement'?
         statement: [],
       });
     }).toThrowError(/^Invalid policy format: 'Statement' element is missing$/);
 
     expect(() => {
       new IAMPolicyEngine({
+        // @ts-expect-error Type '"2012-10-25"' is not assignable to type '"2008-10-17" | "2012-10-17"'. Did you mean '"2012-10-17"'?
         Version: "2012-10-25",
         Statement: [{ Effect: "Allow", Action: "*", Resource: "*" }],
       });
@@ -262,6 +265,7 @@ describe("Test Validation", () => {
         Version: "2012-10-17",
         Statement: [
           {
+            // @ts-expect-error Object literal may only specify known properties, but 'effect' does not exist in type 'Statement'. Did you mean to write 'Effect'?
             effect: "Allow",
             Action: "s3:GetObject",
             Resource: "*",
@@ -280,6 +284,7 @@ describe("Test Validation", () => {
             Effect: "Allow",
             Action: "s3:GetObject",
             Resource: "*",
+            // @ts-expect-error Object literal may only specify known properties, and 'Custom' does not exist in type 'Statement'.
             Custom: "spam",
           },
         ],
@@ -508,6 +513,7 @@ describe("Test Validation", () => {
           Version: "2012-10-17",
           Statement: [
             {
+              // @ts-expect-error Type '"Allows"' is not assignable to type 'Effect'. Did you mean '"Allow"'?
               Effect: "Allows",
               Action: "s3:GetObject",
               Resource: "*",

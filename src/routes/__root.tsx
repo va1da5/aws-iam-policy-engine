@@ -5,7 +5,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 export const Route = createRootRoute({
   component: () => (
     <>
-      <div className="container m-4 mx-auto w-full">
+      <div className="container mx-auto w-full">
         <NavBar />
 
         <div className="mb-10"></div>

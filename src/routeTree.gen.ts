@@ -13,29 +13,29 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as SandboxImport } from './routes/sandbox'
-import { Route as FinishImport } from './routes/finish'
 import { Route as ChallengeIndexImport } from './routes/challenge/index'
 import { Route as ChallengeErrorImport } from './routes/challenge/error'
 import { Route as ChallengePolicyIdImport } from './routes/challenge/$policyId'
 
 // Create Virtual Routes
 
+const SandboxLazyImport = createFileRoute('/sandbox')()
+const FinishLazyImport = createFileRoute('/finish')()
 const IndexLazyImport = createFileRoute('/')()
 
 // Create/Update Routes
 
-const SandboxRoute = SandboxImport.update({
+const SandboxLazyRoute = SandboxLazyImport.update({
   id: '/sandbox',
   path: '/sandbox',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() => import('./routes/sandbox.lazy').then((d) => d.Route))
 
-const FinishRoute = FinishImport.update({
+const FinishLazyRoute = FinishLazyImport.update({
   id: '/finish',
   path: '/finish',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() => import('./routes/finish.lazy').then((d) => d.Route))
 
 const IndexLazyRoute = IndexLazyImport.update({
   id: '/',
@@ -76,14 +76,14 @@ declare module '@tanstack/react-router' {
       id: '/finish'
       path: '/finish'
       fullPath: '/finish'
-      preLoaderRoute: typeof FinishImport
+      preLoaderRoute: typeof FinishLazyImport
       parentRoute: typeof rootRoute
     }
     '/sandbox': {
       id: '/sandbox'
       path: '/sandbox'
       fullPath: '/sandbox'
-      preLoaderRoute: typeof SandboxImport
+      preLoaderRoute: typeof SandboxLazyImport
       parentRoute: typeof rootRoute
     }
     '/challenge/$policyId': {
@@ -114,8 +114,8 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
-  '/finish': typeof FinishRoute
-  '/sandbox': typeof SandboxRoute
+  '/finish': typeof FinishLazyRoute
+  '/sandbox': typeof SandboxLazyRoute
   '/challenge/$policyId': typeof ChallengePolicyIdRoute
   '/challenge/error': typeof ChallengeErrorRoute
   '/challenge': typeof ChallengeIndexRoute
@@ -123,8 +123,8 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
-  '/finish': typeof FinishRoute
-  '/sandbox': typeof SandboxRoute
+  '/finish': typeof FinishLazyRoute
+  '/sandbox': typeof SandboxLazyRoute
   '/challenge/$policyId': typeof ChallengePolicyIdRoute
   '/challenge/error': typeof ChallengeErrorRoute
   '/challenge': typeof ChallengeIndexRoute
@@ -133,8 +133,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexLazyRoute
-  '/finish': typeof FinishRoute
-  '/sandbox': typeof SandboxRoute
+  '/finish': typeof FinishLazyRoute
+  '/sandbox': typeof SandboxLazyRoute
   '/challenge/$policyId': typeof ChallengePolicyIdRoute
   '/challenge/error': typeof ChallengeErrorRoute
   '/challenge/': typeof ChallengeIndexRoute
@@ -170,8 +170,8 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
-  FinishRoute: typeof FinishRoute
-  SandboxRoute: typeof SandboxRoute
+  FinishLazyRoute: typeof FinishLazyRoute
+  SandboxLazyRoute: typeof SandboxLazyRoute
   ChallengePolicyIdRoute: typeof ChallengePolicyIdRoute
   ChallengeErrorRoute: typeof ChallengeErrorRoute
   ChallengeIndexRoute: typeof ChallengeIndexRoute
@@ -179,8 +179,8 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
-  FinishRoute: FinishRoute,
-  SandboxRoute: SandboxRoute,
+  FinishLazyRoute: FinishLazyRoute,
+  SandboxLazyRoute: SandboxLazyRoute,
   ChallengePolicyIdRoute: ChallengePolicyIdRoute,
   ChallengeErrorRoute: ChallengeErrorRoute,
   ChallengeIndexRoute: ChallengeIndexRoute,
@@ -208,10 +208,10 @@ export const routeTree = rootRoute
       "filePath": "index.lazy.tsx"
     },
     "/finish": {
-      "filePath": "finish.tsx"
+      "filePath": "finish.lazy.tsx"
     },
     "/sandbox": {
-      "filePath": "sandbox.tsx"
+      "filePath": "sandbox.lazy.tsx"
     },
     "/challenge/$policyId": {
       "filePath": "challenge/$policyId.tsx"

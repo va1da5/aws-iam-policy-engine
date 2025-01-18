@@ -1,12 +1,17 @@
 ---
 name: Full Access to AWS S3 Service
-description: Create an **IAM identity policy** for a role that provides full access **only** to the AWS S3 service.
+description: |
+  You have recently joined ACME Company and are now responsible for their smooth transition to the AWS public cloud.
+  The company's strategy is to gradually onboard to the cloud, adopting each technology one at a time.
+  Your first task as a new engineer is to step up permissions for users to access the AWS S3 service.
+  Write an **IAM identity policy** that provides full access to the AWS S3 service.
 policyType: IDENTITY_POLICY
 initialPolicy: {}
 hints:
   - Have a look into the [JSON policy document structure](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#policies-introduction).
 solution: |
-  Congratulations! You managed to pass the first challenge. Your created policy should look similar to the below:
+  Congratulations! You successfully wrote the necessary policy and passed the first challenge!
+  Your created policy should look very similar to the one below:
 
   ```json
   {
@@ -20,7 +25,7 @@ solution: |
     ]
   }
   ```
-  This policy only allows access to AWS S3 service and nothing else.
+  This policy only allows access to the AWS S3 service and nothing else! Now, let’s move on to the next task!
 
 testCases:
   - context:

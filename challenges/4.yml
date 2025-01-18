@@ -1,9 +1,18 @@
 ---
-name: Unauthenticated Access to AWS S3 Bucket from Specific IP Range
+name: Unauthenticated Access to AWS S3 Bucket from Specific IP Ranges
 description: |
-  Create an AWS S3 bucket policy that allows public access to a specific trusted IP ranges:
+  The ACME Company must adhere to specific regulations relevant to its industry.
+  You have been informed that auditors require access to historical financial records.
+  Given the limited resources and expertise available on both sides,
+  the most practical solution at this time is to grant access to these records through a public S3 bucket.
+  Fortunately, the auditors have indicated that they possess a static range of IP addresses,
+  which can be utilized to restrict access solely to them.
+
+  Please create an AWS **S3 bucket policy** that grants public access to the specific **trusted IP ranges** listed below:
+
     - *123.123.123.0/24*
     - *31.33.7.0/24*
+
 policyType: RESOURCE_POLICY
 initialPolicy:
   {
@@ -18,9 +27,11 @@ initialPolicy:
       ],
   }
 hints:
-  - "[AWS global condition context keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html)"
+  - What is the purpose of the [Principal](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html) field?
+  - What exactly is an [S3 bucket policy](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucket-policies.html)?
+  - "You may find the answer to your challenge in the list of [AWS global condition context keys](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html)"
 solution: |
-  Congratulations! Your created policy should look similar to the below:
+  Great job! 🎉 You successfully achieved the desired outcome. Your policy should resemble the one outlined below::
 
   ```json
   {
@@ -50,6 +61,8 @@ solution: |
     ]
   }
   ```
+
+  Let’s keep up the excellent work and embrace the next challenge ahead!
 
 testCases:
   - context:

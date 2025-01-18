@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { IAMPolicyEngine } from "@/engine";
-import { Policy, PolicyType } from "@/engine/types";
+import { Policy } from "@/engine/types";
 import Editor from "@/components/editor";
 import { Exercise, TestCase as TC } from "@/types";
 import { getTestCases } from "@/utils/prepareTestCases";
@@ -30,7 +30,7 @@ function Challenge() {
 
   const {
     isPending,
-    error: fetchError,
+    // error: fetchError,
     data: exercise,
     isFetching,
   } = useQuery({
@@ -67,10 +67,7 @@ function Challenge() {
     try {
       const policyObject: Policy = JSON.parse(currentPolicy as string);
 
-      const policy = new IAMPolicyEngine(
-        policyObject,
-        exercise.policyType as PolicyType,
-      );
+      const policy = new IAMPolicyEngine(policyObject, exercise.policyType);
       const results = cases.map((item) => policy.evaluate(item.context));
       const outcome = cases.map(
         (item, index) =>
@@ -124,7 +121,7 @@ function Challenge() {
 
           <div className="mt-5">
             <p className="text-lg font-medium">Challenge</p>
-            <div className="prose prose-slate w-full dark:prose-invert prose-p:my-1 prose-ul:mt-0 prose-li:m-0">
+            <div className="prose prose-slate w-full dark:prose-invert prose-p:my-2 prose-ul:mt-0 prose-li:m-0">
               <Markdown>{exercise.description}</Markdown>
             </div>
           </div>

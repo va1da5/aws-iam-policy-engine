@@ -6,6 +6,9 @@ export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
+    container: {
+      padding: "1rem",
+    },
     extend: {
       borderRadius: {
         lg: "var(--radius)",

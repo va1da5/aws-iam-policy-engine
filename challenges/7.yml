@@ -1,35 +1,17 @@
 ---
-name: Trust Policy For 3rd Party Services
-description: |
-  Update the trust policy to allow third-party service to assume the associated role. Please find integration details below:
-  - **Service provider**: *Ultimate Cloud Security*
-  - **Service AWS account**: *222444666888*
-  - **External ID**: *6eeeed28-083d-47d1-a9a0-ff7dfb409490*
-  - **Source IP range**: *20.40.60.0/24*
-
-policyType: TRUST_POLICY
+name: AWS S3 Access To Personal User Directories
+description: Implement an IAM policy that restricts access solely to the user-assigned directory in the `acme-user-data` bucket. Any actions that could potentially modify the bucket itself must be strictly prohibited.
+policyType: IDENTITY_POLICY
 initialPolicy:
   {
     "Version": "2012-10-17",
-    "Statement":
-      [
-        {
-          "Effect": "Allow",
-          "Principal": { "AWS": "arn:aws:iam::123456789012:root" },
-          "Action": "sts:AssumeRole",
-        },
-      ],
+    "Statement": [{ "Effect": "Allow", "Action": "s3:*", "Resource": "*" }],
   }
 hints:
-  - >
-    **Trust Policies**: These are policies associated with IAM roles.
-    A trust policy specifies which entities (users, roles, or AWS services) are allowed to assume the role.
-    Essentially, it defines the trust relationship between the role and the entities that can assume it.
-    Trust policies are crucial for enabling roles to be assumed by users or services from the same or different AWS accounts.
-
-  - "[How to use trust policies with IAM roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/)."
+  - Is there a way to make AWS IAM policies more dynamic?
+  - "[IAM policy elements: Variables and tags](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html)"
 solution: |
-  Congratulations! Your created policy should look similar to the below:
+  Well done! Your created policy should look similar to the below:
 
   ```json
   {
@@ -37,16 +19,20 @@ solution: |
     "Statement": [
       {
         "Effect": "Allow",
-        "Principal": {
-          "AWS": "arn:aws:iam::222444666888:root"
-        },
-        "Action": "sts:AssumeRole",
+        "Action": "s3:*",
+        "Resource": [
+          "arn:aws:s3:::acme-user-data/${aws:username}/*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": "s3:ListBucket",
+        "Resource": [
+          "arn:aws:s3:::acme-user-data"
+        ],
         "Condition": {
-          "StringEquals": {
-            "sts:ExternalId": "6eeeed28-083d-47d1-a9a0-ff7dfb409490"
-          },
-          "IpAddress": {
-            "aws:SourceIp": "20.40.60.0/24"
+          "StringLike": {
+            "s3:prefix": ["${aws:username}/*"]
           }
         }
       }
@@ -56,85 +42,192 @@ solution: |
 
 testCases:
   - context:
-      action: "sts:AssumeRole"
-      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
-      principal:
-        AWS: ${allowedPrincipals}
-      sts:ExternalId: 6eeeed28-083d-47d1-a9a0-ff7dfb409490
-      aws:SourceIp: "20.40.60.80"
+      action: "s3:GetObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${users}"
+      "s3:prefix": "${users}/${files}"
     allow: true
 
   - context:
-      action: "sts:AssumeRole"
-      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
-      principal:
-        AWS: arn:aws:iam::222444666888:role/integration
-      sts:ExternalId: 6eeeed28-083d-47d1-a9a0-ff7dfb409490
-      aws:SourceIp: ${allowedIPs}
+      action: "s3:PutObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${users}"
+      "s3:prefix": "${users}/${files}"
     allow: true
 
   - context:
-      action: "sts:AssumeRole"
-      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
-      principal:
-        AWS: ${deniedPrincipals}
-      sts:ExternalId: 6eeeed28-083d-47d1-a9a0-ff7dfb409490
-      aws:SourceIp: ${allowedIPs}
+      action: "s3:DeleteObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${users}"
+      "s3:prefix": "${users}/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "brian"
+      "s3:prefix": "brian/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "brian"
+      "s3:prefix": "brian/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "emily"
+      "s3:prefix": "emily/${files}"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": "jackson"
+      "s3:prefix": "peter/${files}"
     allow: false
 
   - context:
-      action: "sts:AssumeRole"
-      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
-      principal:
-        AWS: ${allowedPrincipals}
-      sts:ExternalId: ${deniedExternalIDs}
-      aws:SourceIp: "20.40.60.10"
+      action: "s3:GetObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${incorrectUsers}"
+      "s3:prefix": "${users}/${files}"
     allow: false
 
   - context:
-      action: "sts:AssumeRole"
-      resource: "arn:aws:iam::123456789012:role/UltimateCloudSecurityReadOnly"
-      principal:
-        AWS: ${allowedPrincipals}
-      sts:ExternalId: "6eeeed28-083d-47d1-a9a0-ff7dfb409490"
-      aws:SourceIp: ${deniedIPs}
+      action: "s3:PutObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${incorrectUsers}"
+      "s3:prefix": "${users}/${files}"
+    allow: false
+
+  - context:
+      action: "s3:DeleteObject"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      "aws:username": "${incorrectUsers}"
+      "s3:prefix": "${users}/${files}"
+    allow: false
+
+  - context:
+      action: "${restrictedBucketActions}"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": brian
+    allow: false
+
+  - context:
+      action: "${restrictedBucketActions}"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": isabella
+    allow: false
+
+  - context:
+      action: "${restrictedBucketActions}"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      "aws:username": olivia
     allow: false
 
 values:
-  allowedPrincipals:
-    - arn:aws:iam::222444666888:role/integration
-    - arn:aws:iam::222444666888:role/service
-    - arn:aws:iam::222444666888:role/support
-    - arn:aws:iam::222444666888:role/ingest
+  users:
+    - adelina
+    - brian
+    - carol
+    - daniel
+    - emily
+    - felix
+    - george
+    - hannah
+    - isabella
+    - jackson
+    - kate
+    - luke
+    - mary
+    - noah
+    - olivia
+    - peter
+    - quinn
+    - rachel
+    - sam
+    - tom
+    - ursula
+    - victor
+    - william
+    - xavier
+    - yvonne
+    - zoe
 
-  allowedIPs:
-    - "20.40.60.10"
-    - "20.40.60.32"
-    - "20.40.60.57"
-    - "20.40.60.92"
-    - "20.40.60.151"
-    - "20.40.60.44"
-    - "20.40.60.80"
-    - "20.40.60.252"
+  incorrectUsers:
+    - zoe
+    - adelina
+    - brian
+    - carol
+    - daniel
+    - emily
+    - felix
+    - george
+    - hannah
+    - isabella
+    - jackson
+    - kate
+    - luke
+    - mary
+    - noah
+    - olivia
+    - peter
+    - quinn
+    - rachel
+    - sam
+    - tom
+    - ursula
+    - victor
+    - william
+    - xavier
+    - yvonne
 
-  deniedPrincipals:
-    - arn:aws:iam::312487623891:role/integration
-    - arn:aws:iam::142587322882:role/test
-    - arn:aws:iam::212310384175:role/manager
-    - arn:aws:iam::347138326935:user/john
-    - arn:aws:iam::347138326935:role/support
-    - arn:aws:iam::980101925583:role/admin
-    - arn:aws:iam::649392119148:user/maria
-    - arn:aws:iam::185725520789:role/ec2
+  files:
+    - 2020.sql
+    - 2020.tar.bz2
+    - _wpeprivate/config.json
+    - accounts.txt
+    - adfs/services/trust/2005/windowstransport
+    - adm/index.html
+    - admin-serv/config/admpw
+    - admin/.config
+    - all/modules/ogdi_field/plugins/dataTables/extras/TableTools/media/swf/ZeroClipboard.swf
+    - apache/logs/access.log
+    - api/swagger.yml
+    - apiserver-aggregator.cert
+    - app/composer.json
+    - app/config/databases.yml
+    - app/etc/config.xml
+    - apps/frontend/config/app.yml
+    - clients.tar.gz
+    - checked_accounts.txt
+    - archive.tar.gz
+    - article/admin/admin.asp
+    - auditevents.json
+    - autoconfig.json
+    - axis2/axis2-web/HappyAxis.jsp
+    - backup.zip
+    - basic_auth.csv
+    - ChangeLog.md
 
-  deniedExternalIDs:
-    - 619b01f4-ce81-439b-96e4-38e809a7d6f6
-    - 4b2e2e2e-2e2e-2e2e-2e2e-2e2e2e2e2e2e
-    - cfde34d6-b00d-4550-ac4b-4cb6dbad51dc
-    - fab49f9d-77dc-4abc-a193-ada509f3e0ed
-
-  deniedIPs:
-    - "135.15.35.56"
-    - "236.19.129.134"
-    - "68.222.109.57"
-    - "196.242.166.29"
+  restrictedBucketActions:
+    - s3:CreateBucket
+    - s3:DeleteBucket
+    - s3:DeleteBucketPolicy
+    - s3:DeleteBucketWebsite
+    - s3:PutBucketAcl
+    - s3:PutBucketPolicy
+    - s3:PutBucketLogging
+    - s3:PutBucketPublicAccessBlock
+    - s3:PutBucketRequestPayment
+    - s3:PutBucketTagging
+    - s3:PutBucketVersioning
+    - s3:PutBucketWebsite
+    - s3:PutEncryptionConfiguration
+    - s3:PutLifecycleConfiguration
+    - s3:PutReplicationConfiguration
+    - s3:PauseReplication

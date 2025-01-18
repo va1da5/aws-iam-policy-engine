@@ -146,6 +146,7 @@ describe("Test policy principal functionality", () => {
             Sid: "Enable IAM User Permissions",
             Effect: "Allow",
             Principal: {
+              // @ts-expect-error Type 'null' is not assignable to type 'string | string[] | undefined'.
               AWS: null,
             },
             Action: "kms:*",

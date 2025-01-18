@@ -1,15 +1,38 @@
 ---
-name: AWS S3 Access To All Except Few Buckets
-description: Create an IAM identity policy that provides **full access** only to the AWS S3 service, but **does not allow modification** of the `acme-service-backups` and `acme-strategic-plans` S3 buckets and the objects inside them.
+name: AWS S3 Service Access To All Except Few Buckets
+description: |
+  Another batch of complaints has reached your queue.
+  Fellow engineers who work with databases have expressed their frustration
+  after someone managed to delete some of their backup files.
+  Additionally, upper management is upset about a similar issue,
+  as their strategic plans, hosted in their own bucket, were also lost due
+  to someone's actions. It is essential to improve the existing IAM policy
+  to prevent individuals from **modifying** anything in the following two buckets:
+
+  - **acme-service-backups**
+  - **acme-strategic-plans**
+
+  Owners of these buckets will receive different policies that will allow them to manage their files!
+
 policyType: IDENTITY_POLICY
 initialPolicy:
   {
     "Version": "2012-10-17",
-    "Statement": [{ "Effect": "Allow", "Action": "s3:*", "Resource": "*" }],
+    "Statement":
+      [
+        { "Effect": "Allow", "Action": "s3:*", "Resource": "*" },
+        { "Effect": "Deny", "Action": "s3:DeleteBucket", "Resource": "*" },
+      ],
   }
-hints: []
+hints:
+  - Identify [S3 actions](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations.html) that may perform modifications.
+  - Can you use wildcards in actions?
+  - Some actions work on the bucket, while others focus on the objects within the buckets. All of these need to be accounted for!
+
 solution: |
-  Congratulations! Your created policy should look similar to the below:
+  You did it again! It works just as expected,
+  and now no one with this policy can mess with the files in these buckets anymore.
+  Your created policy should be similar to the one below:
 
   ```json
   {
@@ -18,6 +41,11 @@ solution: |
       {
         "Effect": "Allow",
         "Action": "s3:*",
+        "Resource": "*"
+      },
+      {
+        "Effect": "Deny",
+        "Action": "s3:DeleteBucket",
         "Resource": "*"
       },
       {
@@ -37,6 +65,9 @@ solution: |
   }
   ```
 
+  It didn't take long to celebrate your latest achievement, as a new email just popped up!
+  Let's see what other challenges you will be tackling next!
+
 testCases:
   - context:
       action: "${bucketModificationActions}"
@@ -55,7 +86,7 @@ testCases:
 
   - context:
       action: "${objectModificationActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans/forecasts.md"
+      resource: "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans/forecasts.pdf"
     allow: false
 
   - context:
@@ -402,7 +433,7 @@ values:
     - s3:DeleteAccessPointForObjectLambda
     - s3:DeleteAccessPointPolicy
     - s3:DeleteAccessPointPolicyForObjectLambda
-    - s3:DeleteBucket
+    # - s3:DeleteBucket
     - s3:DeleteBucketPolicy
     - s3:DeleteBucketWebsite
     - s3:DeleteJobTagging

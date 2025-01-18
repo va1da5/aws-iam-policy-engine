@@ -16,6 +16,7 @@ describe("Test Conditions", () => {
           resource: "",
           "aws:PrincipalTag/job-category": "iamuser-admin",
         },
+        // @ts-expect-error Argument of type 'boolean' is not assignable to parameter of type 'Condition'
         true,
       );
     }).toThrowError(

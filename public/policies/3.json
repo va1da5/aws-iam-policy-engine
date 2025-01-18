@@ -1,6 +1,6 @@
 {
-  "name": "AWS S3 Access To All Except Few Buckets",
-  "description": "Create an IAM identity policy that provides **full access** only to the AWS S3 service, but **does not allow modification** of the `acme-service-backups` and `acme-strategic-plans` S3 buckets and the objects inside them.",
+  "name": "AWS S3 Service Access To All Except Few Buckets",
+  "description": "Another batch of complaints has reached your queue.\nFellow engineers who work with databases have expressed their frustration\nafter someone managed to delete some of their backup files.\nAdditionally, upper management is upset about a similar issue,\nas their strategic plans, hosted in their own bucket, were also lost due\nto someone's actions. It is essential to improve the existing IAM policy\nto prevent individuals from **modifying** anything in the following two buckets:\n\n- **acme-service-backups**\n- **acme-strategic-plans**\n\nOwners of these buckets will receive different policies that will allow them to manage their files!\n",
   "policyType": "IDENTITY_POLICY",
   "initialPolicy": {
     "Version": "2012-10-17",
@@ -9,11 +9,20 @@
         "Effect": "Allow",
         "Action": "s3:*",
         "Resource": "*"
+      },
+      {
+        "Effect": "Deny",
+        "Action": "s3:DeleteBucket",
+        "Resource": "*"
       }
     ]
   },
-  "hints": [],
-  "solution": "Congratulations! Your created policy should look similar to the below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": \"*\"\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:Delete*\",\n        \"s3:Put*\"\n      ],\n      \"Resource\": [\n        \"arn:aws:s3:::acme-service-backups\",\n        \"arn:aws:s3:::acme-service-backups/*\",\n        \"arn:aws:s3:::acme-strategic-plans\",\n        \"arn:aws:s3:::acme-strategic-plans/*\"\n      ]\n    }\n  ]\n}\n```\n",
+  "hints": [
+    "Identify [S3 actions](https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations.html) that may perform modifications.",
+    "Can you use wildcards in actions?",
+    "Some actions work on the bucket, while others focus on the objects within the buckets. All of these need to be accounted for!"
+  ],
+  "solution": "You did it again! It works just as expected,\nand now no one with this policy can mess with the files in these buckets anymore.\nYour created policy should be similar to the one below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": \"*\"\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": \"s3:DeleteBucket\",\n      \"Resource\": \"*\"\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:Delete*\",\n        \"s3:Put*\"\n      ],\n      \"Resource\": [\n        \"arn:aws:s3:::acme-service-backups\",\n        \"arn:aws:s3:::acme-service-backups/*\",\n        \"arn:aws:s3:::acme-strategic-plans\",\n        \"arn:aws:s3:::acme-strategic-plans/*\"\n      ]\n    }\n  ]\n}\n```\n\nIt didn't take long to celebrate your latest achievement, as a new email just popped up!\nLet's see what other challenges you will be tackling next!\n",
   "testCases": [
     {
       "context": {
@@ -39,7 +48,7 @@
     {
       "context": {
         "action": "${objectModificationActions}",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans/forecasts.md"
+        "resource": "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans/forecasts.pdf"
       },
       "allow": false
     },
@@ -396,7 +405,6 @@
       "s3:DeleteAccessPointForObjectLambda",
       "s3:DeleteAccessPointPolicy",
       "s3:DeleteAccessPointPolicyForObjectLambda",
-      "s3:DeleteBucket",
       "s3:DeleteBucketPolicy",
       "s3:DeleteBucketWebsite",
       "s3:DeleteJobTagging",
