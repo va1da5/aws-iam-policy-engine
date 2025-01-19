@@ -14,7 +14,7 @@ function RouteComponent() {
 
 You absolutely crushed it! I hope you had a blast and picked up some valuable insights along the journey. Now, it’s time to roll up those sleeves, put those skills into action, and lock down your cloud like a pro! 🚀
 
-If you’ve got some brilliant ideas for new challenges or any other enhancements, don’t hesitate to jump in! I would love for you to share your thoughts or improvements directly to the [Github repository](https://github.com/va1da5/aws-iam-policy-engine). Let’s make this even better together! 💡✨
+If you’ve got some brilliant ideas for new challenges or any other enhancements, don’t hesitate to jump in! I would love for you to share your thoughts or improvements directly to the [Github repository](https://github.com/va1da5/aws-iam-challenges). Let’s make this even better together! 💡✨
 `}
       </Markdown>
     </div>
