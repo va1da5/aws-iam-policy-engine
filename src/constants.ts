@@ -1,1 +1,1 @@
-export const numberOfChallenges = 8;
+export const numberOfChallenges = 9;

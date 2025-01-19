@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest --silent=false",
-    "convert": "for f in challenges/*.yml; do id=$(echo $f | sed -E 's/.*\\/([0-9]+)\\.yml/\\1/'); js-yaml $f > public/policies/$id.json; done"
+    "convert": "for f in $(find challenges -name \"*.yml\" | grep -v template); do id=$(echo $f | sed -E 's/.*\\/([0-9]+)\\.yml/\\1/'); js-yaml $f > public/policies/$id.json; done"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
@@ -19,6 +19,7 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-icons": "^1.3.1",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.6",
     "@tanstack/react-query": "^5.59.20",
     "@tanstack/react-router": "^1.82.1",
     "@uiw/codemirror-extensions-basic-setup": "^4.23.6",

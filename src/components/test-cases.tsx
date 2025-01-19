@@ -42,9 +42,9 @@ export default function TestCases({ cases, results }: Props) {
         <CollapsibleTrigger className="w-full">
           <span className="mb-1 flex w-full justify-between">
             <div>
-              <p className="text-left font-medium">Evaluation Requests</p>
+              <p className="text-left font-medium">Test Cases</p>
               <p className="text-left text-sm text-muted-foreground">
-                Click to expand the list of simulated request contexts.
+                Click to expand the list of simulated requests to the AWS.
               </p>
             </div>
             <div>
@@ -61,7 +61,7 @@ export default function TestCases({ cases, results }: Props) {
               available in AWS requests; it only provides those that might be
               needed to complete the policy writing exercise.
             </p>
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full pr-3">
               {outcomes.map((item, index) => {
                 return (
                   <TestCase

@@ -1,6 +1,6 @@
 {
   "name": "Restricting EC2 Instance Launches to Small Sizes",
-  "description": "Using an IAM policy, limit the types of EC2 instances that users can launch through the AWS console to only the small ones (nano, micro, and small) of any instance type allowed.\n",
+  "description": "Some of your colleagues have begun exploring the AWS EC2 service. However, the accounting department has expressed some concerns regarding the potential costs associated with this service. As a result, they have requested your assistance in minimizing expenses during the initial stages of adopting this service. To address this, you have decided to restrict the EC2 instance sizes (types) to the smallest options that users are permitted to launch. The final step is to create an IAM identity policy to implement this restriction. The following EC2 instance sizes should be allowed:\n\n- **nano**\n- **micro**\n- **small**\n\nIt didn't take long for you to discover that launching EC2 instances through the web console initiates several additional actions. However, there is no need to limit specific EC2 actions as long as the size restriction is met.\n",
   "policyType": "IDENTITY_POLICY",
   "initialPolicy": {
     "Version": "2012-10-17",
@@ -12,8 +12,12 @@
       }
     ]
   },
-  "hints": [],
-  "solution": "Congratulations! Your created policy should look similar to the below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"LimitInstanceTypes\",\n      \"Effect\": \"Allow\",\n      \"Action\": \"ec2:RunInstances\",\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringLikeIfExists\": {\n          \"ec2:InstanceType\": [\n            \"*.nano\",\n            \"*.micro\",\n            \"*.small\"\n          ]\n        }\n      }\n    },\n    {\n      \"Sid\": \"AllowNeededActions\",\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"ec2:Describe*\",\n        \"ec2:CreateTags\",\n        \"ec2:CreateKeyPair\"\n      ],\n      \"Resource\": \"*\"\n    }\n  ]\n}\n```\n\nor even simpler approach by just denying specific condition:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"FullEC2Access\",\n      \"Effect\": \"Allow\",\n      \"Action\": \"ec2:*\",\n      \"Resource\": \"*\"\n    },\n    {\n      \"Sid\": \"PreventLargerInstances\",\n      \"Effect\": \"Deny\",\n      \"Action\": \"ec2:RunInstances\",\n      \"Resource\": \"arn:aws:ec2:::instance/*\",\n      \"Condition\": {\n        \"StringNotLike\": {\n          \"ec2:InstanceType\": [\n            \"*.nano\",\n            \"*.micro\",\n            \"*.small\"\n          ]\n        }\n      }\n    }\n  ]\n}\n```\n",
+  "hints": [
+    "Take a moment to analyze the context values associated with the same action. You may discover some intriguing insights along the way!",
+    "There may be instances when AWS IAM condition context keys are missing from certain requests. Is there a way to address this limitation?",
+    "Another option would be to isolate the action and the resource combination that utilizes the `ec2:InstanceType` context key."
+  ],
+  "solution": "Fantastic job! Thanks to you, the accounting team no longer has to worry! \n\nThere are multiple ways to achieve this; however,\nyour approach might resemble something similar to the example below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"LimitInstanceTypes\",\n      \"Effect\": \"Allow\",\n      \"Action\": \"ec2:*\",\n      \"Resource\": \"*\",\n      \"Condition\": {\n        \"StringLikeIfExists\": {\n          \"ec2:InstanceType\": [\n            \"*.nano\",\n            \"*.micro\",\n            \"*.small\"\n          ]\n        }\n      }\n    }\n  ]\n}\n```\n\nAlternatively, you could have opted to use the denial statement:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Sid\": \"FullEC2Access\",\n      \"Effect\": \"Allow\",\n      \"Action\": \"ec2:*\",\n      \"Resource\": \"*\"\n    },\n    {\n      \"Sid\": \"PreventLargerInstances\",\n      \"Effect\": \"Deny\",\n      \"Action\": \"ec2:RunInstances\",\n      \"Resource\": \"arn:aws:ec2:::instance/*\",\n      \"Condition\": {\n        \"StringNotLike\": {\n          \"ec2:InstanceType\": [\n            \"*.nano\",\n            \"*.micro\",\n            \"*.small\"\n          ]\n        }\n      }\n    }\n  ]\n}\n```\n\nAlright, it’s time to move on to the next challenge!\n",
   "testCases": [
     {
       "context": {
@@ -186,7 +190,10 @@
       "ec2:DescribeSubnets",
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeVpcs",
-      "ec2:DescribeImages"
+      "ec2:GetEbsEncryptionByDefault",
+      "ec2:GetEbsDefaultKmsKeyId",
+      "ec2:DescribeImages",
+      "ec2:GetInstanceMetadataDefaults"
     ],
     "allowedInstanceTypes": [
       "t2.nano",

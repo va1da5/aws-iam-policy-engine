@@ -1,6 +1,6 @@
 {
   "name": "AWS S3 Access To Personal User Directories",
-  "description": "Implement an IAM policy that restricts access solely to the user-assigned directory in the `acme-user-data` bucket. Any actions that could potentially modify the bucket itself must be strictly prohibited.",
+  "description": "The IT engineering team has developed an innovative idea to synchronize files from users' home directories to an S3 bucket. They intend to utilize a single bucket, **acme-user-data**, for all employees, with each user's space prefixed by their username. Your task is to create an IAM identity policy that permits users to access only their own files.\n\nAdditionally, any actions that could potentially modify the bucket itself must be strictly prohibited.\n",
   "policyType": "IDENTITY_POLICY",
   "initialPolicy": {
     "Version": "2012-10-17",
@@ -8,15 +8,18 @@
       {
         "Effect": "Allow",
         "Action": "s3:*",
-        "Resource": "*"
+        "Resource": [
+          "arn:aws:s3:::acme-user-data",
+          "arn:aws:s3:::acme-user-data/*"
+        ]
       }
     ]
   },
   "hints": [
     "Is there a way to make AWS IAM policies more dynamic?",
-    "[IAM policy elements: Variables and tags](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html)"
+    "It’s important to familiarize yourself with [IAM policy variables](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_variables.html)."
   ],
-  "solution": "Well done! Your created policy should look similar to the below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": [\n        \"arn:aws:s3:::acme-user-data/${aws:username}/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:ListBucket\",\n      \"Resource\": [\n        \"arn:aws:s3:::acme-user-data\"\n      ],\n      \"Condition\": {\n        \"StringLike\": {\n          \"s3:prefix\": [\"${aws:username}/*\"]\n        }\n      }\n    }\n  ]\n}\n```\n",
+  "solution": "Kudos to you! Now your colleagues can sleep well knowing their file copies are safely backed up in the cloud, and none of their teammates can access them! The policy you wrote should be similar to the one outlined below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:*\",\n      \"Resource\": [\n        \"arn:aws:s3:::acme-user-data/${aws:username}/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": \"s3:ListBucket\",\n      \"Resource\": [\n        \"arn:aws:s3:::acme-user-data\"\n      ],\n      \"Condition\": {\n        \"StringLike\": {\n          \"s3:prefix\": \"${aws:username}/*\"\n        }\n      }\n    }\n  ]\n}\n```\n\nThe next challenge is already waiting for you!\n",
   "testCases": [
     {
       "context": {

@@ -1,16 +1,29 @@
 ---
 name: Restricting EC2 Instance Launches to Small Sizes
 description: |
-  Using an IAM policy, limit the types of EC2 instances that users can launch through the AWS console to only the small ones (nano, micro, and small) of any instance type allowed.
+  Some of your colleagues have begun exploring the AWS EC2 service. However, the accounting department has expressed some concerns regarding the potential costs associated with this service. As a result, they have requested your assistance in minimizing expenses during the initial stages of adopting this service. To address this, you have decided to restrict the EC2 instance sizes (types) to the smallest options that users are permitted to launch. The final step is to create an IAM identity policy to implement this restriction. The following EC2 instance sizes should be allowed:
+
+  - **nano**
+  - **micro**
+  - **small**
+
+  It didn't take long for you to discover that launching EC2 instances through the web console initiates several additional actions. However, there is no need to limit specific EC2 actions as long as the size restriction is met.
+
 policyType: IDENTITY_POLICY
 initialPolicy:
   {
     "Version": "2012-10-17",
     "Statement": [{ "Effect": "Allow", "Action": "ec2:*", "Resource": "*" }],
   }
-hints: []
+hints:
+  - Take a moment to analyze the context values associated with the same action. You may discover some intriguing insights along the way!
+  - There may be instances when AWS IAM condition context keys are missing from certain requests. Is there a way to address this limitation?
+  - Another option would be to isolate the action and the resource combination that utilizes the `ec2:InstanceType` context key.
 solution: |
-  Congratulations! Your created policy should look similar to the below:
+  Fantastic job! Thanks to you, the accounting team no longer has to worry! 
+
+  There are multiple ways to achieve this; however,
+  your approach might resemble something similar to the example below:
 
   ```json
   {
@@ -19,7 +32,7 @@ solution: |
       {
         "Sid": "LimitInstanceTypes",
         "Effect": "Allow",
-        "Action": "ec2:RunInstances",
+        "Action": "ec2:*",
         "Resource": "*",
         "Condition": {
           "StringLikeIfExists": {
@@ -30,22 +43,12 @@ solution: |
             ]
           }
         }
-      },
-      {
-        "Sid": "AllowNeededActions",
-        "Effect": "Allow",
-        "Action": [
-          "ec2:Describe*",
-          "ec2:CreateTags",
-          "ec2:CreateKeyPair"
-        ],
-        "Resource": "*"
       }
     ]
   }
   ```
 
-  or even simpler approach by just denying specific condition:
+  Alternatively, you could have opted to use the denial statement:
 
   ```json
   {
@@ -75,6 +78,8 @@ solution: |
     ]
   }
   ```
+
+  Alright, it’s time to move on to the next challenge!
 
 testCases:
   - context:
@@ -227,10 +232,10 @@ values:
     - ec2:DescribeSubnets
     - ec2:DescribeSecurityGroups
     - ec2:DescribeVpcs
-    # - ec2:GetEbsEncryptionByDefault
-    # - ec2:GetEbsDefaultKmsKeyId
+    - ec2:GetEbsEncryptionByDefault
+    - ec2:GetEbsDefaultKmsKeyId
     - ec2:DescribeImages
-    # - ec2:GetInstanceMetadataDefaults
+    - ec2:GetInstanceMetadataDefaults
 
   allowedInstanceTypes:
     - t2.nano

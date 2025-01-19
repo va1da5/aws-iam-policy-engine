@@ -5,6 +5,8 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import Indicator from "./indicator";
+import { parseBool } from "@/engine/utils";
 
 type Props = {
   testCase: TC;
@@ -22,6 +24,10 @@ const getActualAction = (action: boolean | undefined) => {
   }
 };
 
+const getExpectedAction = (allow: boolean) => {
+  return allow ? "Allowed" : "Denied";
+};
+
 export default function TestCase({ testCase, outcome }: Props) {
   const { action } = testCase.context;
 
@@ -31,23 +37,35 @@ export default function TestCase({ testCase, outcome }: Props) {
 
   return (
     <AccordionItem value={`${JSON.stringify(testCase.context)}`}>
-      <AccordionTrigger>
-        <span className="flex gap-2">
+      <AccordionTrigger className="hover:no-underline">
+        <span className="flex w-full gap-2 hover:no-underline">
           <Badge variant={testPassed ? "success" : "failure"}>
             {testPassed ? "Passed" : "Failed"}
           </Badge>
-          <span>{action}</span>
+          <span className="flex w-full justify-between pr-5">
+            <span className="hover:underline">{action}</span>
+            <span className="flex gap-3">
+              <Indicator
+                state={testCase.allow}
+                tooltip={`Expected policy outcome is "${getExpectedAction(testCase.allow)}"`}
+              />
+              <Indicator
+                state={parseBool(outcome)}
+                tooltip={`Current policy outcome is "${getActualAction(outcome)}"`}
+              />
+            </span>
+          </span>
         </span>
       </AccordionTrigger>
       <AccordionContent>
         <p>
-          <strong>Expected:</strong> {testCase.allow ? "Allowed" : "Denied"}
+          <strong>Expected:</strong> {getExpectedAction(testCase.allow)}
         </p>
         <p>
           <strong>Actual:</strong> {getActualAction(outcome)}
         </p>
         <p>
-          <strong>Context:</strong>
+          <strong>Request Context:</strong>
         </p>
         <pre className="text-wrap rounded bg-slate-100 p-2 text-sm">
           {JSON.stringify(testCase.context, null, 2)}
