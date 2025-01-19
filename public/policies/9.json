@@ -22,7 +22,7 @@
     {
       "context": {
         "action": "${s3Actions}",
-        "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket",
+        "resource": "arn:aws:s3:::amzn-s3-demo-bucket",
         "aws:PrincipalArn": "arn:aws:iam::123456789012:user/brian"
       },
       "allow": true
@@ -54,7 +54,7 @@
     {
       "context": {
         "action": "${ec2Actions}",
-        "resource": "arn:aws:cloudwatch:us-east-1:123456789012:*",
+        "resource": "arn:aws:ec2:us-east-1:123456789012:*",
         "aws:PrincipalArn": "arn:aws:iam::123456789012:user/brian"
       },
       "allow": true
@@ -62,7 +62,7 @@
     {
       "context": {
         "action": "${stsActions}",
-        "resource": "arn:aws:cloudwatch:us-east-1:123456789012:*",
+        "resource": "arn:aws:sts::123456789012:*",
         "aws:PrincipalArn": "arn:aws:iam::123456789012:user/adrian"
       },
       "allow": true
@@ -70,7 +70,7 @@
     {
       "context": {
         "action": "${iamActions}",
-        "resource": "arn:aws:cloudwatch:us-east-1:123456789012:*",
+        "resource": "arn:aws:iam::123456789012:*",
         "aws:PrincipalArn": "arn:aws:iam::123456789012:user/paul"
       },
       "allow": true
@@ -102,7 +102,7 @@
     {
       "context": {
         "action": "${s3Actions}",
-        "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket",
+        "resource": "arn:aws:s3:::amzn-s3-demo-bucket",
         "aws:PrincipalArn": "arn:aws:iam::123456789012:user/cloudAdmin"
       },
       "allow": true

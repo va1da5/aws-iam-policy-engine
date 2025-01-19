@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { getActiveChallenge } from "@/utils/tracker";
 
 export const Route = createFileRoute("/challenge/")({
   component: RouteComponent,
@@ -8,14 +9,14 @@ export const Route = createFileRoute("/challenge/")({
 function RouteComponent() {
   const navigate = useNavigate({ from: "/challenge" });
 
-  const challengeId = 1;
+  const challengeId = getActiveChallenge();
 
   React.useEffect(() => {
     navigate({
       to: `/challenge/$policyId`,
       replace: true,
       params: {
-        policyId: String(challengeId),
+        policyId: challengeId.toString(),
       },
     });
   }, []);

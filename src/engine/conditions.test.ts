@@ -347,7 +347,7 @@ describe("Test Conditions", () => {
         },
         {
           ArnLike: {
-            "aws:SourceArn": "arn:aws:cloudtrail::111122223333:trail/*",
+            "aws:SourceArn": "arn:aws:cloudtrail:*:111122223333:trail/*",
           },
         },
       ),
@@ -363,7 +363,7 @@ describe("Test Conditions", () => {
         },
         {
           ArnLike: {
-            "aws:SourceArn": "arn:aws:cloudtrail:::trail/*",
+            "aws:SourceArn": "arn:aws:cloudtrail:*:*:trail/*",
           },
         },
       ),
@@ -379,7 +379,7 @@ describe("Test Conditions", () => {
         },
         {
           ArnLike: {
-            "aws:SourceArn": "arn:aws:cloudtrail:::*",
+            "aws:SourceArn": "arn:aws:cloudtrail:*:*:*",
           },
         },
       ),

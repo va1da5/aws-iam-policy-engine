@@ -36,9 +36,11 @@ hints:
   - "You can manage access based on [date and time](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws-dates.html)"
   - You may want to explore condition keys for Amazon S3, particularly the [s3:prefix](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazons3.html#amazons3-s3_prefix) key.
 solution: |
-  You nailed it! Your policy should prevent anyone from accessing the sensitive files before the information is officially made public.
-  Now, this situation is a bit more complex compared to the previous ones.
-  However, your solution may resemble the one outlined below:
+  You nailed it! Your policy should prevent anyone from downloading the sensitive files before the information is officially made public.
+
+  Please note that the listing of all files will still be accessible to individuals, even when the *s3:prefix* condition is specified. This applies when performing a recursive listing using the command `aws s3 ls s3://acme-earnings-calls --no-sign-request --recursive`, or when directly accessing the S3 bucket. If the presence of the file or its filenames is sensitive in nature, you might want to consider completely restricting the listing functionality.
+
+  Now, this situation is a bit more complex compared to the previous ones. However, your solution may resemble the one outlined below:
 
   ```json
   {
@@ -153,13 +155,12 @@ solution: |
     ]
   }
   ```
-
   Take a break, relax, and when you're ready, let's continue to the next challenge.
 
 testCases:
   - context:
       action: "s3:GetObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls/${oldFiles}"
+      resource: "arn:aws:s3:::acme-earnings-calls/${oldFiles}"
       principal:
         AWS: "*"
       aws:CurrentTime: "${datesBefore}"
@@ -168,7 +169,7 @@ testCases:
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls"
+      resource: "arn:aws:s3:::acme-earnings-calls"
       principal:
         AWS: "*"
       s3:prefix: ${oldFiles}
@@ -178,7 +179,7 @@ testCases:
 
   - context:
       action: "s3:GetObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls/${unreleasedFiles}"
+      resource: "arn:aws:s3:::acme-earnings-calls/${unreleasedFiles}"
       principal:
         AWS: "*"
       aws:CurrentTime: "${datesBefore}"
@@ -187,7 +188,7 @@ testCases:
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls"
+      resource: "arn:aws:s3:::acme-earnings-calls"
       principal:
         AWS: "*"
       s3:prefix: ${unreleasedFiles}
@@ -197,7 +198,7 @@ testCases:
 
   - context:
       action: "s3:GetObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls/${unreleasedFiles}"
+      resource: "arn:aws:s3:::acme-earnings-calls/${unreleasedFiles}"
       principal:
         AWS: "*"
       aws:CurrentTime: "${datesAfter}"
@@ -206,7 +207,7 @@ testCases:
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls"
+      resource: "arn:aws:s3:::acme-earnings-calls"
       principal:
         AWS: "*"
       s3:prefix: ${unreleasedFiles}

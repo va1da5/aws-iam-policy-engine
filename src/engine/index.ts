@@ -881,7 +881,7 @@ export class IAMPolicyEngine {
         `Invalid ARN partition "${partition}". Supported values ${validPartitions.join(", ")}.`,
       );
 
-    if (!service.length || service != service.toLowerCase()) {
+    if (!service.length || service != service.toLowerCase() || service == "*") {
       throw new Error(`Invalid ARN service: "${service}"`);
     }
 
@@ -907,7 +907,7 @@ export class IAMPolicyEngine {
     return patternParts
       .map((part, index) => {
         // If the part is empty and is either region or account ID and is empty
-        if (!part.length && [3, 4].includes(index)) return true;
+        // if (!part.length && [3, 4].includes(index)) return true; // it is not safe to assume that :: is equal to :*: - each depend on individual service
         if (part === "*" && strParts[index].length > 0) return true;
         return this.wildcardMatch(part, strParts[index], true);
       })

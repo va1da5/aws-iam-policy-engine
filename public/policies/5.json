@@ -25,12 +25,12 @@
     "You can manage access based on [date and time](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_aws-dates.html)",
     "You may want to explore condition keys for Amazon S3, particularly the [s3:prefix](https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazons3.html#amazons3-s3_prefix) key."
   ],
-  "solution": "You nailed it! Your policy should prevent anyone from accessing the sensitive files before the information is officially made public.\nNow, this situation is a bit more complex compared to the previous ones.\nHowever, your solution may resemble the one outlined below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:GetObject\",\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": [\n        \"arn:aws:s3:::acme-earnings-calls\",\n        \"arn:aws:s3:::acme-earnings-calls/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:GetObject\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls/2025/04/*\",\n      \"Condition\": {\n        \"DateLessThan\": {\n          \"aws:CurrentTime\": \"2025-04-07T13:00:00Z\"\n        }\n      }\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls\",\n      \"Condition\": {\n        \"DateLessThan\": {\n          \"aws:CurrentTime\": \"2025-04-07T13:00:00Z\"\n        },\n        \"StringLike\": {\n          \"s3:prefix\": \"2025/04/*\"\n        }\n      }\n    }\n  ]\n}\n```\n\nHowever, there was another option to rely on numbers rather than dates.\nConverting the date *2025-04-07T13:00:00Z* to a Unix epoch number yields a value of `1744030800`,\nwhich can later be compared to the current epoch time. Please see the example below.\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:GetObject\",\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": [\n        \"arn:aws:s3:::acme-earnings-calls\",\n        \"arn:aws:s3:::acme-earnings-calls/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:GetObject\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls/2025/04/*\",\n      \"Condition\": {\n        \"NumericLessThanEquals\": {\n          \"aws:EpochTime\": \"1744030800\"\n        }\n      }\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls\",\n      \"Condition\": {\n        \"NumericLessThanEquals\": {\n          \"aws:EpochTime\": \"1744030800\"\n        },\n        \"StringLike\": {\n          \"s3:prefix\": \"2025/04/*\"\n        }\n      }\n    }\n  ]\n}\n```\n\nTake a break, relax, and when you're ready, let's continue to the next challenge.\n",
+  "solution": "You nailed it! Your policy should prevent anyone from downloading the sensitive files before the information is officially made public.\n\nPlease note that the listing of all files will still be accessible to individuals, even when the *s3:prefix* condition is specified. This applies when performing a recursive listing using the command `aws s3 ls s3://acme-earnings-calls --no-sign-request --recursive`, or when directly accessing the S3 bucket. If the presence of the file or its filenames is sensitive in nature, you might want to consider completely restricting the listing functionality.\n\nNow, this situation is a bit more complex compared to the previous ones. However, your solution may resemble the one outlined below:\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:GetObject\",\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": [\n        \"arn:aws:s3:::acme-earnings-calls\",\n        \"arn:aws:s3:::acme-earnings-calls/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:GetObject\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls/2025/04/*\",\n      \"Condition\": {\n        \"DateLessThan\": {\n          \"aws:CurrentTime\": \"2025-04-07T13:00:00Z\"\n        }\n      }\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls\",\n      \"Condition\": {\n        \"DateLessThan\": {\n          \"aws:CurrentTime\": \"2025-04-07T13:00:00Z\"\n        },\n        \"StringLike\": {\n          \"s3:prefix\": \"2025/04/*\"\n        }\n      }\n    }\n  ]\n}\n```\n\nHowever, there was another option to rely on numbers rather than dates.\nConverting the date *2025-04-07T13:00:00Z* to a Unix epoch number yields a value of `1744030800`,\nwhich can later be compared to the current epoch time. Please see the example below.\n\n```json\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n        \"s3:GetObject\",\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": [\n        \"arn:aws:s3:::acme-earnings-calls\",\n        \"arn:aws:s3:::acme-earnings-calls/*\"\n      ]\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:GetObject\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls/2025/04/*\",\n      \"Condition\": {\n        \"NumericLessThanEquals\": {\n          \"aws:EpochTime\": \"1744030800\"\n        }\n      }\n    },\n    {\n      \"Effect\": \"Deny\",\n      \"Action\": [\n        \"s3:ListBucket\"\n      ],\n      \"Principal\": {\n        \"AWS\": \"*\"\n      },\n      \"Resource\": \"arn:aws:s3:::acme-earnings-calls\",\n      \"Condition\": {\n        \"NumericLessThanEquals\": {\n          \"aws:EpochTime\": \"1744030800\"\n        },\n        \"StringLike\": {\n          \"s3:prefix\": \"2025/04/*\"\n        }\n      }\n    }\n  ]\n}\n```\nTake a break, relax, and when you're ready, let's continue to the next challenge.\n",
   "testCases": [
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls/${oldFiles}",
+        "resource": "arn:aws:s3:::acme-earnings-calls/${oldFiles}",
         "principal": {
           "AWS": "*"
         },
@@ -42,7 +42,7 @@
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls",
+        "resource": "arn:aws:s3:::acme-earnings-calls",
         "principal": {
           "AWS": "*"
         },
@@ -55,7 +55,7 @@
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls/${unreleasedFiles}",
+        "resource": "arn:aws:s3:::acme-earnings-calls/${unreleasedFiles}",
         "principal": {
           "AWS": "*"
         },
@@ -67,7 +67,7 @@
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls",
+        "resource": "arn:aws:s3:::acme-earnings-calls",
         "principal": {
           "AWS": "*"
         },
@@ -80,7 +80,7 @@
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls/${unreleasedFiles}",
+        "resource": "arn:aws:s3:::acme-earnings-calls/${unreleasedFiles}",
         "principal": {
           "AWS": "*"
         },
@@ -92,7 +92,7 @@
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-earnings-calls",
+        "resource": "arn:aws:s3:::acme-earnings-calls",
         "principal": {
           "AWS": "*"
         },

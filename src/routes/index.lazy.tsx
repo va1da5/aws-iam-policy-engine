@@ -23,7 +23,7 @@ These challenges will help you familiarize yourself with AWS IAM policies and in
 `}
       </Markdown>
 
-      <div className="flex w-full justify-center">
+      <div className="flex w-full justify-center pt-5">
         <Button
           size="xl"
           onClick={() =>

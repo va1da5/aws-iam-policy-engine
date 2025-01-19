@@ -25,3 +25,5 @@ dist-ssr
 
 cases
 iam-data
+# Local Netlify folder
+.netlify

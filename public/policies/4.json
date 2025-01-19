@@ -25,7 +25,7 @@
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports/${files}",
+        "resource": "arn:aws:s3:::acme-financial-reports/${files}",
         "principal": {
           "AWS": "*"
         },
@@ -36,7 +36,7 @@
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports",
+        "resource": "arn:aws:s3:::acme-financial-reports",
         "principal": {
           "AWS": "*"
         },
@@ -48,7 +48,7 @@
     {
       "context": {
         "action": "s3:ListBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports",
+        "resource": "arn:aws:s3:::acme-financial-reports",
         "principal": {
           "AWS": "*"
         },
@@ -60,7 +60,7 @@
     {
       "context": {
         "action": "s3:GetObject",
-        "resource": "arn:aws:s3:us-east-1:123456789012:acme-financial-reports/${files}",
+        "resource": "arn:aws:s3:::acme-financial-reports/${files}",
         "principal": {
           "AWS": "*"
         },

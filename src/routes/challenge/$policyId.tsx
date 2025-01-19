@@ -14,6 +14,7 @@ import TestCases from "@/components/test-cases";
 import Markdown from "@/components/markdown";
 import Solution from "@/components/solution";
 import { numberOfChallenges } from "@/constants";
+import { setActiveChallenge } from "@/utils/tracker";
 
 export const Route = createFileRoute("/challenge/$policyId")({
   component: Challenge,
@@ -135,7 +136,8 @@ function Challenge() {
                   <div className="mt-10 flex w-full justify-center">
                     {parseInt(policyId) < numberOfChallenges && (
                       <Button
-                        onClick={() =>
+                        onClick={() => {
+                          setActiveChallenge(parseInt(policyId) + 1);
                           navigate({
                             from: `/challenge/${policyId}`,
                             to: Route.to,
@@ -143,8 +145,8 @@ function Challenge() {
                             params: {
                               policyId: String(parseInt(policyId) + 1),
                             },
-                          })
-                        }
+                          });
+                        }}
                       >
                         Next Challenge
                       </Button>
@@ -152,13 +154,14 @@ function Challenge() {
 
                     {parseInt(policyId) >= numberOfChallenges && (
                       <Button
-                        onClick={() =>
+                        onClick={() => {
+                          setActiveChallenge(1);
                           navigate({
                             from: `/challenge/${policyId}`,
                             to: "/finish",
                             replace: true,
-                          })
-                        }
+                          });
+                        }}
                       >
                         Finish
                       </Button>

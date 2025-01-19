@@ -56,89 +56,96 @@ solution: |
 testCases:
   - context:
       action: "s3:GetObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      resource: "arn:aws:s3:::acme-user-data/${users}/${files}"
       "aws:username": "${users}"
       "s3:prefix": "${users}/${files}"
     allow: true
 
   - context:
       action: "s3:PutObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      resource: "arn:aws:s3:::acme-user-data/${users}/${files}"
       "aws:username": "${users}"
       "s3:prefix": "${users}/${files}"
     allow: true
 
   - context:
       action: "s3:DeleteObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      resource: "arn:aws:s3:::acme-user-data/${users}/${files}"
       "aws:username": "${users}"
       "s3:prefix": "${users}/${files}"
     allow: true
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": "brian"
       "s3:prefix": "brian/${files}"
     allow: true
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": "brian"
-      "s3:prefix": "brian/${files}"
+      "s3:prefix": "brian/"
     allow: true
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
+      "aws:username": "emily"
+      "s3:prefix": "emily/"
+    allow: true
+
+  - context:
+      action: "s3:ListBucket"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": "emily"
       "s3:prefix": "emily/${files}"
     allow: true
 
   - context:
       action: "s3:ListBucket"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": "jackson"
       "s3:prefix": "peter/${files}"
     allow: false
 
   - context:
       action: "s3:GetObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      resource: "arn:aws:s3:::acme-user-data/${users}/${files}"
       "aws:username": "${incorrectUsers}"
       "s3:prefix": "${users}/${files}"
     allow: false
 
   - context:
       action: "s3:PutObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      resource: "arn:aws:s3:::acme-user-data/${users}/${files}"
       "aws:username": "${incorrectUsers}"
       "s3:prefix": "${users}/${files}"
     allow: false
 
   - context:
       action: "s3:DeleteObject"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data/${users}/${files}"
+      resource: "arn:aws:s3:::acme-user-data/${users}/${files}"
       "aws:username": "${incorrectUsers}"
       "s3:prefix": "${users}/${files}"
     allow: false
 
   - context:
       action: "${restrictedBucketActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": brian
     allow: false
 
   - context:
       action: "${restrictedBucketActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": isabella
     allow: false
 
   - context:
       action: "${restrictedBucketActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-user-data"
+      resource: "arn:aws:s3:::acme-user-data"
       "aws:username": olivia
     allow: false
 

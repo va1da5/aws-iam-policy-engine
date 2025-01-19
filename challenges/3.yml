@@ -71,37 +71,37 @@ solution: |
 testCases:
   - context:
       action: "${bucketModificationActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-service-backups"
+      resource: "arn:aws:s3:::acme-service-backups"
     allow: false
 
   - context:
       action: "${bucketModificationActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans"
+      resource: "arn:aws:s3:::acme-strategic-plans"
     allow: false
 
   - context:
       action: "${objectModificationActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-service-backups/customers.sql"
+      resource: "arn:aws:s3:::acme-service-backups/customers.sql"
     allow: false
 
   - context:
       action: "${objectModificationActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans/forecasts.pdf"
+      resource: "arn:aws:s3:::acme-strategic-plans/forecasts.pdf"
     allow: false
 
   - context:
       action: "${allowedActionsOnSensitiveBuckets}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-service-backups"
+      resource: "arn:aws:s3:::acme-service-backups"
     allow: true
 
   - context:
       action: "${allowedActionsOnSensitiveBuckets}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-strategic-plans"
+      resource: "arn:aws:s3:::acme-strategic-plans"
     allow: true
 
   - context:
       action: "${allowedActions}"
-      resource: "arn:aws:s3:us-east-1:123456789012:acme-generic-files"
+      resource: "arn:aws:s3:::acme-generic-files"
     allow: true
 
   - context:

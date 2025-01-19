@@ -1,30 +1,14 @@
-# AWS IAM Policy Engine Simulator
+# AWS IAM Challenges
 
-An attempt to simulate the AWS IAM policy decision engine primarily for learning purposes. This is a work in progress...
+The project offers hands-on exercises focused on writing AWS IAM policies. Each exercise introduces different aspects of IAM policies that participants need to familiarize themselves with in order to tackle the challenges effectively. This approach ensures that individuals gain a solid understanding of the topics before advancing to the subsequent challenges.
 
-## TODOs
+## About
 
-- [x] Principle/NotPrinciple
-- [x] Add Null condition
-- [x] Support for multivalued context keys using `ForAllValues:` and `ForAnyValue:`
-- [ ] More Tests for multivalued context
-- [x] Support for variables in policies
-- [x] Bug: cursor in the policy editor jumps while writing JSON
-- [ ] Report issue option
+This project utilizes a custom-made policy detection engine that closely adheres to the [reference documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies.html) provided by AWS. However, it is important to note that it is not 100% compatible with the original engine and may produce incorrect evaluations in certain instances. Nevertheless, it proves to be sufficiently effective for implementing this educational challenges, allowing participants to gain hands-on experience while learning about AWS IAM policies.
 
-## AWS IAM Policies
+The engine itself was created as an exercise to gain a deeper understanding of the various options available in AWS IAM policies and how they interact with one another. What better way to explore a subject than by actively implementing a working clone? Once the engine performed well, it would have been a shame to let it languish among the forgotten pet projects. Thus, a new journey began—one focused on gathering intriguing examples that would address different topics in each exercise, building upon one another along the way.
 
-- **Identity Policies**: These are policies that are attached to IAM (Identity and Access Management) identities, such as users, groups, or roles. Identity policies define what actions an identity can perform on which resources. For example, an identity policy might allow a user to read objects from an S3 bucket or launch EC2 instances.
-
-- **Resource-Based Policies**: These are policies that are attached directly to AWS resources such as S3 buckets, SQS queues, or SNS topics. They define what actions can be performed on the resource and who (which AWS accounts, IAM users, or roles) is allowed to perform those actions. Resource-based policies are used to grant cross-account access and to specify permissions for the resource itself.
-
-- **Trust Policies**: These are policies associated with IAM roles. A trust policy specifies which entities (users, roles, or AWS services) are allowed to assume the role. Essentially, it defines the trust relationship between the role and the entities that can assume it. Trust policies are crucial for enabling roles to be assumed by users or services from the same or different AWS accounts.
-
-- **Session Policies**: These are temporary policies that can be applied when assuming a role or when using AWS STS (Security Token Service). Session policies allow you to further restrict the permissions granted by the identity policy for the duration of the session. They are useful for providing temporary, limited permissions without modifying the identity policy itself.
-
-- **Service Control Policies (SCPs)**: SCPs are a feature of AWS Organizations and are used to manage permissions across multiple AWS accounts within an organization. SCPs allow you to set permission guardrails for accounts, which can restrict the maximum permissions that can be granted to IAM identities within those accounts. SCPs do not grant permissions by themselves; they only define what is allowed or denied at the organizational level.
-
-- **Permission Boundary Policies**: These are a specific type of policy that defines the maximum permissions that an IAM role can have. A permission boundary acts as a guardrail, limiting the permissions that can be granted to the role, even if the identity policies attached to that role would allow broader permissions. Permission boundaries are particularly useful in scenarios where you want to delegate permission management while ensuring that certain limits are enforced.
+This project now offers a variety of exercises designed to guide anyone interested in AWS IAM policies. These activities will help users create functional policies while minimizing the risk of making mistakes along the way.
 
 ## References
 

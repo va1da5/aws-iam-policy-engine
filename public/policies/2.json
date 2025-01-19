@@ -22,14 +22,14 @@
     {
       "context": {
         "action": "s3:DeleteBucket",
-        "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        "resource": "arn:aws:s3:::amzn-s3-demo-bucket"
       },
       "allow": false
     },
     {
       "context": {
         "action": "${allowedActions}",
-        "resource": "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket"
+        "resource": "arn:aws:s3:::amzn-s3-demo-bucket"
       },
       "allow": true
     },

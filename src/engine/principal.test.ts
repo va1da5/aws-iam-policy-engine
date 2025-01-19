@@ -370,7 +370,7 @@ describe("Test policy principal functionality", () => {
     expect(
       policy.evaluate({
         action: "s3:GetObject",
-        resource: "arn:aws:s3::111122223333:bucket/test.jpg",
+        resource: "arn:aws:s3:::bucket/test.jpg",
         principal: { AWS: "arn:aws:iam::111122223333:role/MyRole" },
       }),
     ).toBeTruthy();

@@ -97,7 +97,7 @@ describe("Test Resources", () => {
   test("Resource match region wildcard", () => {
     expect(
       engine.resourceMatches(
-        "arn:aws:s3:us-east-1::amzn-s3-demo-bucket-production/test.jpg",
+        "arn:aws:s3:::amzn-s3-demo-bucket-production/test.jpg",
         "arn:aws:s3:::amzn-s3-demo-bucket-production/*",
       ),
     ).toBeTruthy();
@@ -106,7 +106,7 @@ describe("Test Resources", () => {
   test("Resource match account wildcard", () => {
     expect(
       engine.resourceMatches(
-        "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket-production/test.jpg",
+        "arn:aws:s3:::amzn-s3-demo-bucket-production/test.jpg",
         "arn:aws:s3:::amzn-s3-demo-bucket-production/*",
       ),
     ).toBeTruthy();
@@ -115,7 +115,7 @@ describe("Test Resources", () => {
   test("Resource match account wildcard array", () => {
     expect(
       engine.resourceMatches(
-        "arn:aws:s3:us-east-1:123456789012:amzn-s3-demo-bucket-production/test.jpg",
+        "arn:aws:s3:::amzn-s3-demo-bucket-production/test.jpg",
         [
           "arn:aws:s3:::amzn-s3-demo-bucket-test/*",
           "arn:aws:s3:::amzn-s3-demo-bucket-production/*",
