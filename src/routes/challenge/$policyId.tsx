@@ -31,7 +31,7 @@ function Challenge() {
 
   const {
     isPending,
-    // error: fetchError,
+    error: fetchError,
     data: exercise,
     isFetching,
   } = useQuery({
@@ -40,6 +40,7 @@ function Challenge() {
       const response = await fetch(`/policies/${policyId}.json`);
       return await response.json();
     },
+    retry: 1,
   });
 
   useEffect(() => {
@@ -51,7 +52,7 @@ function Challenge() {
   }, [policyId]);
 
   useEffect(() => {
-    if (isPending || isFetching) return;
+    if (isPending || isFetching || fetchError) return;
 
     const testCases = getTestCases(exercise as Exercise);
     setCases(testCases);
@@ -94,6 +95,16 @@ function Challenge() {
   }, [currentPolicy, exercise, isPending, isFetching]);
 
   if (isPending || isFetching) return "Loading...";
+
+  if (fetchError) {
+    return navigate({
+      to: Route.to,
+      replace: true,
+      params: {
+        policyId: "error",
+      },
+    });
+  }
 
   return (
     <div>

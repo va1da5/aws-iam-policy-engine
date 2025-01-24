@@ -5,5 +5,5 @@ export const Route = createFileRoute("/challenge/error")({
 });
 
 function RouteComponent() {
-  return "Hello /challenge/error!";
+  return "Something went wrong!";
 }
